@@ -7,7 +7,8 @@ global:
 auth:
   username: authentik
   database: authentik
-  # Password should be provided via existingSecret in production
+  # Password will be taken from existingSecret, but Helm chart requires a value for validation
+  password: "dummy-password-for-helm-validation"
   existingSecret: postgres-credentials
 
 primary:

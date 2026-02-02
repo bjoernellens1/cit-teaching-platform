@@ -12,7 +12,11 @@ helm:
   valuesFiles:
     - values/authentik-values.yaml
 
-# Depends on CRDs and SOPS operator for secret decryption
+# Include SOPS secret manifests
+diff:
+  compareSecrets: false
+
+bundleStructureMode: "all"
 dependsOn:
   - name: cit-crds
   - name: cit-sops-operator
