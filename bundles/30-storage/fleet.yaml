@@ -1,0 +1,23 @@
+# Fleet bundle configuration for Storage
+# Bundle name: cit-storage
+
+namespace: cit-jhub
+
+# Raw manifests (no Helm chart)
+helm:
+  chart: ""
+
+# Path to manifests
+paths:
+  - manifests/
+
+# Can be deployed in parallel with JupyterHub
+dependsOn:
+  - name: 00-crds
+
+# Target cluster selection
+targets:
+  - name: cit-clusters
+    clusterSelector:
+      matchLabels:
+        env: cit-teaching

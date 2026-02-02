@@ -1,0 +1,18 @@
+# Root Fleet configuration for CIT Teaching Platform
+# This file configures Fleet to discover and deploy all bundles in this repository
+
+defaultNamespace: fleet-default
+
+# Apply bundles in order based on directory naming
+# 00-crds -> 10-authentik -> 20-jupyterhub -> 30-storage -> 40-policies
+helm:
+  # Global Helm configuration if needed
+  releaseName: ""
+
+# Target cluster selection
+# Modify these selectors based on your Fleet cluster labels
+targets:
+  - name: cit-clusters
+    clusterSelector:
+      matchLabels:
+        env: cit-teaching

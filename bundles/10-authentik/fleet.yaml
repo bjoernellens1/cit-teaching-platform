@@ -1,0 +1,23 @@
+# Fleet bundle configuration for Authentik
+# Bundle name: cit-authentik
+
+namespace: cit-auth
+
+helm:
+  repo: https://charts.goauthentik.io
+  chart: authentik
+  version: 2024.2.2
+  releaseName: authentik
+  valuesFiles:
+    - values/authentik-values.yaml
+
+# Depends on CRDs being installed
+dependsOn:
+  - name: 00-crds
+
+# Target cluster selection
+targets:
+  - name: cit-clusters
+    clusterSelector:
+      matchLabels:
+        env: cit-teaching
