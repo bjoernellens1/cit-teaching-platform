@@ -50,6 +50,7 @@ kubeconfig
 *.kubeconfig
 
 # Age/GPG keys (NEVER commit private keys)
+age.key
 *.age
 *.agekey
 *.gpg
