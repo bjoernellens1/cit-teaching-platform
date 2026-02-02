@@ -13,7 +13,8 @@ helm:
     - values/authentik-values.yaml
 
 # Include SOPS secret manifests
-# Manifests moved to root for automatic discovery
+resources:
+  - path: secrets/sopssecrets
 dependsOn:
   - name: cit-crds
   - name: cit-sops-operator
