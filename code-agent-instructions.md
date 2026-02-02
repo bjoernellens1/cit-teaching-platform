@@ -101,8 +101,8 @@ Use two namespaces:
 
 Ingress:
 
-* `auth.cit.<your-domain>` → Authentik
-* `jhub.cit.<your-domain>` → JupyterHub
+* `auth.dshl.unileoben.ac.at` → Authentik
+* `jhub.dshl.unileoben.ac.at` → JupyterHub
 
 TLS:
 
