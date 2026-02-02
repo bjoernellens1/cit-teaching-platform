@@ -55,6 +55,8 @@ hub:
       # Enable auth_state to access groups in spawner
       enable_auth_state: true
       
+      # Enable group management to use admin_groups
+      manage_groups: true
       # Admin group mapping
       admin_groups:
         - jhub-admins
