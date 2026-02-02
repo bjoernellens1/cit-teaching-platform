@@ -119,8 +119,10 @@ hub:
           # Set environment for init container
           spawner.environment["INIT_DIRS"] = " ".join(init_dirs)
           
-          # Add course volumes
+          # Add course volumes (safely initialize lists if not present)
           if volumes:
+              spawner.volumes = getattr(spawner, 'volumes', []) or []
+              spawner.volume_mounts = getattr(spawner, 'volume_mounts', []) or []
               spawner.volumes.extend(volumes)
               spawner.volume_mounts.extend(volume_mounts)
           
@@ -248,7 +250,7 @@ cull:
   timeout: 3600
   # Check every 5 minutes
   every: 300
-  # Also cull pods with no activity at all
+  # Keep user accounts when their servers are culled (only servers are removed)
   users: false
   # Remove named servers after cull
   removeNamedServers: true
