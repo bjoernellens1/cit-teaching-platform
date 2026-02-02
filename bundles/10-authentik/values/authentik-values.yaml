@@ -31,6 +31,12 @@ server:
   # High availability: 2-3 replicas for teaching load
   replicas: 2
   
+  env:
+    - name: AUTHENTIK_POSTGRESQL__PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: authentik-postgres-credentials
+          key: password
   envFrom:
     - secretRef:
         name: authentik-secrets
@@ -81,6 +87,12 @@ worker:
   # High availability: 2 replicas for flow/event processing
   replicas: 2
 
+  env:
+    - name: AUTHENTIK_POSTGRESQL__PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: authentik-postgres-credentials
+          key: password
   envFrom:
     - secretRef:
         name: authentik-secrets
