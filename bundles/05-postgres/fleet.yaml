@@ -14,7 +14,7 @@ helm:
 
 # Include SOPS secret manifests
 resources:
-  - path: secrets/sopssecrets
+  - path: postgres-sopssecret.yaml
 dependsOn:
   - name: cit-crds
   - name: cit-sops-operator
