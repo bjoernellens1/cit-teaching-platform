@@ -1,0 +1,21 @@
+# SOPS Configuration
+# This file configures SOPS for secret encryption in this repository
+
+# Age key configuration
+# Replace with your actual age public key
+creation_rules:
+  # Encrypt all files in sops directories
+  - path_regex: .*\.enc\.yaml$
+    age: age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Alternative: Use multiple keys for different environments
+# creation_rules:
+#   - path_regex: bundles/.*/secrets/sops/.*\.enc\.yaml$
+#     age: >-
+#       age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,
+#       age1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+
+# GPG alternative (if using GPG instead of age)
+# creation_rules:
+#   - path_regex: .*\.enc\.yaml$
+#     pgp: 'FINGERPRINT1,FINGERPRINT2'

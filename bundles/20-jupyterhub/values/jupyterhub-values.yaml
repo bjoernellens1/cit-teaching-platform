@@ -1,0 +1,288 @@
+# JupyterHub Helm values for CIT Teaching Platform
+# Using Zero-to-JupyterHub (z2jh) chart
+# Optimized for teaching workloads with course-based access control
+
+# =============================================================================
+# HUB CONFIGURATION
+# =============================================================================
+
+hub:
+  # Resource limits for hub
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  
+  # Database configuration
+  db:
+    type: sqlite-pvc
+    pvc:
+      storageClassName: ""  # Use default
+      storage: 1Gi
+  
+  # ==========================================================================
+  # AUTHENTICATION - Authentik OIDC
+  # ==========================================================================
+  config:
+    JupyterHub:
+      authenticator_class: generic-oauth
+    
+    GenericOAuthenticator:
+      # Authentik OIDC endpoints
+      # UPDATE: Replace with your domain
+      authorize_url: https://auth.cit.example.com/application/o/authorize/
+      token_url: https://auth.cit.example.com/application/o/token/
+      userdata_url: https://auth.cit.example.com/application/o/userinfo/
+      
+      # OAuth2 client credentials (from Authentik)
+      client_id: jupyterhub
+      # client_secret provided via extraEnv from secret
+      
+      # Scopes to request
+      scope:
+        - openid
+        - profile
+        - email
+        - groups
+      
+      # User info mapping
+      username_claim: preferred_username
+      
+      # Enable auth_state to access groups in spawner
+      enable_auth_state: true
+      
+      # Admin group mapping
+      admin_groups:
+        - jhub-admins
+      
+      # Allow all authenticated users
+      allow_all: true
+    
+    Authenticator:
+      # Enable auth_state for group-based configuration
+      enable_auth_state: true
+      # Auto-login (skip JupyterHub login button)
+      auto_login: true
+  
+  # ==========================================================================
+  # EXTRA CONFIGURATION - Pre-spawn hook for course folders
+  # ==========================================================================
+  extraConfig:
+    # Pre-spawn hook to create user directories and mount course volumes
+    pre_spawn_hook: |
+      import os
+      
+      async def pre_spawn_hook(spawner):
+          """
+          Pre-spawn hook to configure user environment based on group membership.
+          
+          This hook:
+          1. Creates user-local directories (work, shared, courses/*)
+          2. Mounts shared course volumes based on group membership
+          3. Sets environment variables for the init container
+          """
+          auth_state = await spawner.user.get_auth_state()
+          groups = set((auth_state or {}).get("oauth_user", {}).get("groups", []))
+          
+          # Always create these user-local folders
+          init_dirs = ["/home/jovyan/work", "/home/jovyan/shared"]
+          
+          # Identify course groups and prepare mounts
+          course_ids = []
+          volume_mounts = []
+          volumes = []
+          
+          for g in groups:
+              if g.startswith("course-"):
+                  course_id = g.replace("course-", "")
+                  course_ids.append(course_id)
+                  
+                  # Add user-local course directory
+                  init_dirs.append(f"/home/jovyan/courses/{course_id}")
+                  
+                  # Mount shared course volume (if exists)
+                  volumes.append({
+                      "name": f"course-{course_id}-shared",
+                      "persistentVolumeClaim": {
+                          "claimName": f"course-{course_id}-shared"
+                      }
+                  })
+                  volume_mounts.append({
+                      "name": f"course-{course_id}-shared",
+                      "mountPath": f"/srv/courses/{course_id}",
+                      "readOnly": False
+                  })
+          
+          # Set environment for init container
+          spawner.environment["INIT_DIRS"] = " ".join(init_dirs)
+          
+          # Add course volumes
+          if volumes:
+              spawner.volumes.extend(volumes)
+              spawner.volume_mounts.extend(volume_mounts)
+          
+          # Log for debugging
+          spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}")
+      
+      c.KubeSpawner.pre_spawn_hook = pre_spawn_hook
+  
+  # Environment variables from secrets
+  extraEnv:
+    OAUTH_CLIENT_SECRET:
+      valueFrom:
+        secretKeyRef:
+          name: jupyterhub-oauth-secret
+          key: client-secret
+
+# =============================================================================
+# PROXY CONFIGURATION
+# =============================================================================
+
+proxy:
+  service:
+    type: ClusterIP
+  
+  chp:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+
+# =============================================================================
+# SINGLE USER (STUDENT) PODS
+# =============================================================================
+
+singleuser:
+  # Default notebook image
+  image:
+    name: jupyter/datascience-notebook
+    tag: "2024-02-26"
+  
+  # Resource limits per user
+  cpu:
+    limit: 2
+    guarantee: 0.5
+  memory:
+    limit: 4G
+    guarantee: 1G
+  
+  # Storage - per-user home directory
+  storage:
+    type: dynamic
+    capacity: 10Gi
+    dynamic:
+      storageClass: ""  # Use default
+    homeMountPath: /home/jovyan
+    extraVolumes: []
+    extraVolumeMounts: []
+  
+  # Init container to create directories
+  initContainers:
+    - name: init-directories
+      image: busybox:1.36
+      command:
+        - /bin/sh
+        - -c
+        - |
+          # Create directories from INIT_DIRS environment variable
+          if [ -n "$INIT_DIRS" ]; then
+            for dir in $INIT_DIRS; do
+              mkdir -p "$dir"
+              echo "Created directory: $dir"
+            done
+          fi
+          # Ensure proper ownership
+          chown -R 1000:100 /home/jovyan
+      env:
+        - name: INIT_DIRS
+          value: "/home/jovyan/work /home/jovyan/shared"
+      volumeMounts:
+        - name: volume-{username}
+          mountPath: /home/jovyan
+  
+  # Profile list for different resource tiers
+  profileList:
+    - display_name: "Standard"
+      description: "Standard environment with 2 CPU cores and 4GB RAM"
+      default: true
+    - display_name: "Large"
+      description: "Large environment with 4 CPU cores and 8GB RAM"
+      kubespawner_override:
+        cpu_limit: 4
+        cpu_guarantee: 1
+        mem_limit: "8G"
+        mem_guarantee: "2G"
+    - display_name: "GPU (if available)"
+      description: "Environment with GPU access"
+      kubespawner_override:
+        extra_resource_limits:
+          nvidia.com/gpu: 1
+
+# =============================================================================
+# SCHEDULING
+# =============================================================================
+
+scheduling:
+  # User scheduler for better pod placement
+  userScheduler:
+    enabled: true
+  
+  # Pod priority for user pods
+  userPods:
+    nodeAffinity:
+      matchNodePurpose: prefer
+
+# =============================================================================
+# CULLING - Idle pod cleanup
+# =============================================================================
+
+cull:
+  enabled: true
+  # Cull after 1 hour of inactivity (aggressive for teaching)
+  timeout: 3600
+  # Check every 5 minutes
+  every: 300
+  # Also cull pods with no activity at all
+  users: false
+  # Remove named servers after cull
+  removeNamedServers: true
+  # Max age of a server before culling (8 hours - lecture day)
+  maxAge: 28800
+
+# =============================================================================
+# INGRESS
+# =============================================================================
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  hosts:
+    - jhub.cit.example.com  # UPDATE: Replace with your domain
+  tls:
+    - secretName: jupyterhub-tls
+      hosts:
+        - jhub.cit.example.com  # UPDATE: Replace with your domain
+
+# =============================================================================
+# PRE-PULLER - Reduce spawn time
+# =============================================================================
+
+prePuller:
+  # Pre-pull images on all nodes
+  hook:
+    enabled: true
+  continuous:
+    enabled: true
+
+# =============================================================================
+# DEBUG
+# =============================================================================
+
+debug:
+  enabled: false

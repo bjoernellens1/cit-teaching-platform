@@ -1,0 +1,23 @@
+# Fleet bundle configuration for JupyterHub
+# Bundle name: cit-jupyterhub
+
+namespace: cit-jhub
+
+helm:
+  repo: https://hub.jupyter.org/helm-chart/
+  chart: jupyterhub
+  version: 3.3.7
+  releaseName: jupyterhub
+  valuesFiles:
+    - values/jupyterhub-values.yaml
+
+# Depends on Authentik for OIDC
+dependsOn:
+  - name: 10-authentik
+
+# Target cluster selection
+targets:
+  - name: cit-clusters
+    clusterSelector:
+      matchLabels:
+        env: cit-teaching
