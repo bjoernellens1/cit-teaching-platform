@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.pyc
+__pycache__/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Logs
+*.log
+logs/
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# Unencrypted secrets (NEVER commit these)
+# All secrets should be SOPS-encrypted with .enc.yaml extension
+**/secrets/*.yaml
+!**/secrets/**/*.enc.yaml
+**/secrets.yaml
+**/secret.yaml
+
+# Helm dependencies (downloaded on demand)
+charts/
+
+# Terraform state (if using Terraform)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Kubeconfig files
+kubeconfig
+*.kubeconfig
+
+# Age/GPG keys (NEVER commit private keys)
+*.age
+*.agekey
+*.gpg
+*.asc
+
+# Test outputs
+coverage/
+.coverage
+htmlcov/

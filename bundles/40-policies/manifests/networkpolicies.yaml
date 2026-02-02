@@ -1,0 +1,248 @@
+# Network Policies for CIT Teaching Platform
+#
+# These policies provide network isolation between namespaces and
+# restrict traffic to only what is necessary for the platform to function.
+
+# =============================================================================
+# CIT-AUTH NAMESPACE (Authentik)
+# =============================================================================
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: authentik-default-deny
+  namespace: cit-auth
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: authentik-allow-ingress
+  namespace: cit-auth
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: authentik-server
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 9000
+    # Allow from JupyterHub for OIDC
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cit-jhub
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: authentik-allow-egress
+  namespace: cit-auth
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow to Uni Keycloak (external)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow internal communication (postgres, redis)
+    - to:
+        - podSelector: {}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: authentik-internal
+  namespace: cit-auth
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow all internal communication within namespace
+    - from:
+        - podSelector: {}
+
+# =============================================================================
+# CIT-JHUB NAMESPACE (JupyterHub)
+# =============================================================================
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: jupyterhub-default-deny
+  namespace: cit-jhub
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: jupyterhub-allow-ingress
+  namespace: cit-jhub
+spec:
+  podSelector:
+    matchLabels:
+      component: proxy
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: jupyterhub-hub-to-proxy
+  namespace: cit-jhub
+spec:
+  podSelector:
+    matchLabels:
+      component: proxy
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: hub
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: jupyterhub-hub-to-singleuser
+  namespace: cit-jhub
+spec:
+  podSelector:
+    matchLabels:
+      component: singleuser-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: hub
+    - from:
+        - podSelector:
+            matchLabels:
+              component: proxy
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: jupyterhub-allow-egress
+  namespace: cit-jhub
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow to Authentik for OIDC
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cit-auth
+      ports:
+        - protocol: TCP
+          port: 9000
+    # Allow internal communication
+    - to:
+        - podSelector: {}
+    # Allow user pods to access internet (for pip install, etc.)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: jupyterhub-singleuser-egress
+  namespace: cit-jhub
+spec:
+  podSelector:
+    matchLabels:
+      component: singleuser-server
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow to hub
+    - to:
+        - podSelector:
+            matchLabels:
+              component: hub
+    # Allow internet access for pip/conda (exclude private IPs)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80

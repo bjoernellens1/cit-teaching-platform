@@ -1,0 +1,42 @@
+# cert-manager Helm values
+# These values are used when deploying cert-manager via Fleet
+# Only relevant if cert-manager is not already installed cluster-wide
+
+installCRDs: true
+
+replicaCount: 1
+
+# Resources for cert-manager controller
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
+
+# Prometheus monitoring
+prometheus:
+  enabled: false
+
+# Webhook configuration
+webhook:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# CA Injector
+cainjector:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
