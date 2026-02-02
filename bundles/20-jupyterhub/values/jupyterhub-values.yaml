@@ -20,7 +20,7 @@ hub:
   db:
     type: sqlite-pvc
     pvc:
-      storageClassName: ""  # Use default
+      storageClassName: "longhorn"  # Use longhorn
       storage: 1Gi
   
   existingSecret: jupyterhub-secrets
@@ -180,7 +180,7 @@ singleuser:
     type: dynamic
     capacity: 10Gi
     dynamic:
-      storageClass: ""  # Use default
+      storageClass: "longhorn"  # Use longhorn
     homeMountPath: /home/jovyan
     extraVolumes: []
     extraVolumeMounts: []

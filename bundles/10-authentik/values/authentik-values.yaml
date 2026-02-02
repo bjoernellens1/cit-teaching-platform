@@ -125,7 +125,7 @@ postgresql:
     persistence:
       enabled: true
       size: 10Gi
-      storageClass: ""  # Use default storage class
+      storageClass: "longhorn"  # Use longhorn storage class
     
     resources:
       requests:
