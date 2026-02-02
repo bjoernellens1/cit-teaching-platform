@@ -1,0 +1,88 @@
+# Resource Quotas for CIT Teaching Platform
+#
+# These quotas prevent resource exhaustion and ensure fair sharing
+# among users in the teaching environment.
+
+# =============================================================================
+# CIT-AUTH NAMESPACE (Authentik)
+# =============================================================================
+
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: authentik-quota
+  namespace: cit-auth
+spec:
+  hard:
+    # Limit total CPU and memory
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    # Limit number of pods
+    pods: "20"
+    # Limit persistent volume claims
+    persistentvolumeclaims: "10"
+    # Limit services
+    services: "10"
+
+# =============================================================================
+# CIT-JHUB NAMESPACE (JupyterHub)
+# =============================================================================
+
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: jupyterhub-core-quota
+  namespace: cit-jhub
+spec:
+  hard:
+    # Core infrastructure limits (hub, proxy, scheduler)
+    # User pods are managed separately via spawner limits
+    
+    # Reasonable limits for ~100 concurrent users
+    requests.cpu: "200"
+    requests.memory: 400Gi
+    limits.cpu: "400"
+    limits.memory: 800Gi
+    
+    # Pod limit (hub + proxy + ~200 user pods)
+    pods: "250"
+    
+    # PVC limit (user homes + course shares)
+    persistentvolumeclaims: "500"
+    
+    # Services limit
+    services: "20"
+
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: jupyterhub-limit-range
+  namespace: cit-jhub
+spec:
+  limits:
+    # Default limits for containers if not specified
+    - type: Container
+      default:
+        cpu: "2"
+        memory: 4Gi
+      defaultRequest:
+        cpu: 500m
+        memory: 1Gi
+      max:
+        cpu: "8"
+        memory: 16Gi
+      min:
+        cpu: 100m
+        memory: 256Mi
+    
+    # Limits for PVCs
+    - type: PersistentVolumeClaim
+      max:
+        storage: 100Gi
+      min:
+        storage: 1Gi

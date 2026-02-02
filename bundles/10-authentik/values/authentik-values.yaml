@@ -1,0 +1,194 @@
+# Authentik Helm values for CIT Teaching Platform
+# This configuration is optimized for teaching workloads with HA settings
+
+# =============================================================================
+# GLOBAL CONFIGURATION
+# =============================================================================
+
+authentik:
+  # Secret key for signing cookies and tokens
+  # Override via SOPS-encrypted secret
+  secret_key: ""
+  
+  # Error reporting (disable in production)
+  error_reporting:
+    enabled: false
+  
+  # PostgreSQL connection
+  postgresql:
+    host: authentik-postgresql
+    name: authentik
+    user: authentik
+    # Password provided via secret
+  
+  # Redis connection
+  redis:
+    host: authentik-redis-master
+
+# =============================================================================
+# SERVER CONFIGURATION (HA)
+# =============================================================================
+
+server:
+  # High availability: 2-3 replicas for teaching load
+  replicas: 2
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  
+  # Pod disruption budget for HA
+  pdb:
+    enabled: true
+    minAvailable: 1
+  
+  # Probes for health checking
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  # Ingress configuration
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - host: auth.cit.example.com  # UPDATE: Replace with your domain
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: authentik-tls
+        hosts:
+          - auth.cit.example.com  # UPDATE: Replace with your domain
+
+# =============================================================================
+# WORKER CONFIGURATION (HA)
+# =============================================================================
+
+worker:
+  # High availability: 2 replicas for flow/event processing
+  replicas: 2
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Pod disruption budget
+  pdb:
+    enabled: true
+    minAvailable: 1
+
+# =============================================================================
+# EMBEDDED OUTPOST
+# =============================================================================
+
+# Using embedded outpost - runs as part of server
+# For external outpost, configure separately
+
+# =============================================================================
+# POSTGRESQL (In-Cluster)
+# =============================================================================
+
+postgresql:
+  enabled: true
+  
+  auth:
+    username: authentik
+    database: authentik
+    # Password provided via existingSecret
+    existingSecret: authentik-postgres-credentials
+    secretKeys:
+      adminPasswordKey: postgres-password
+      userPasswordKey: password
+  
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: ""  # Use default storage class
+    
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  
+  # Backup configuration
+  # Consider external backup solution for production
+  backup:
+    enabled: false
+
+# =============================================================================
+# REDIS
+# =============================================================================
+
+redis:
+  enabled: true
+  
+  architecture: standalone  # Use 'replication' for HA
+  
+  auth:
+    enabled: false  # Enable in production with secrets
+  
+  master:
+    persistence:
+      enabled: true
+      size: 2Gi
+    
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+# =============================================================================
+# SECURITY SETTINGS
+# =============================================================================
+
+# Rate limiting and brute-force protection are configured in Authentik UI
+# Recommended settings for teaching:
+# - Login rate limit: 5 attempts per minute
+# - Session duration: 8 hours (aligned with lecture day)
+# - Remember me: 7 days
+
+# =============================================================================
+# SERVICE ACCOUNT
+# =============================================================================
+
+serviceAccount:
+  create: true
+  annotations: {}
+
+# =============================================================================
+# POD ANNOTATIONS
+# =============================================================================
+
+podAnnotations: {}
+
+# =============================================================================
+# NODE SELECTOR / TOLERATIONS
+# =============================================================================
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -1,0 +1,90 @@
+# Shared Course Volumes (RWX) for CIT Teaching Platform
+#
+# Each course gets a ReadWriteMany (RWX) volume that is shared among all
+# students enrolled in that course. This enables:
+# - Instructors to distribute materials
+# - Collaborative work on shared datasets
+# - Submission folders
+#
+# Volume naming convention: course-<id>-shared
+
+# =============================================================================
+# EXAMPLE COURSE VOLUMES
+# =============================================================================
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: course-aml-shared
+  namespace: cit-jhub
+  labels:
+    app.kubernetes.io/part-of: cit-teaching-platform
+    app.kubernetes.io/component: storage
+    course: aml
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-csi  # UPDATE: Match your RWX-capable storage class
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: course-robotics-shared
+  namespace: cit-jhub
+  labels:
+    app.kubernetes.io/part-of: cit-teaching-platform
+    app.kubernetes.io/component: storage
+    course: robotics
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-csi  # UPDATE: Match your RWX-capable storage class
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: course-datamodeling-shared
+  namespace: cit-jhub
+  labels:
+    app.kubernetes.io/part-of: cit-teaching-platform
+    app.kubernetes.io/component: storage
+    course: datamodeling
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-csi  # UPDATE: Match your RWX-capable storage class
+  resources:
+    requests:
+      storage: 50Gi
+
+# =============================================================================
+# TEMPLATE FOR NEW COURSES
+# =============================================================================
+# Copy this template when adding a new course:
+#
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: course-<course-id>-shared
+#   namespace: cit-jhub
+#   labels:
+#     app.kubernetes.io/part-of: cit-teaching-platform
+#     app.kubernetes.io/component: storage
+#     course: <course-id>
+# spec:
+#   accessModes:
+#     - ReadWriteMany
+#   storageClassName: nfs-csi
+#   resources:
+#     requests:
+#       storage: 50Gi

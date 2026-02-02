@@ -1,0 +1,25 @@
+# Fleet bundle configuration for Policies
+# Bundle name: cit-policies
+
+# Applied to both namespaces
+namespace: ""
+
+# Raw manifests (no Helm chart)
+helm:
+  chart: ""
+
+# Path to manifests
+paths:
+  - manifests/
+
+# Apply after all other bundles
+dependsOn:
+  - name: 10-authentik
+  - name: 20-jupyterhub
+
+# Target cluster selection
+targets:
+  - name: cit-clusters
+    clusterSelector:
+      matchLabels:
+        env: cit-teaching
