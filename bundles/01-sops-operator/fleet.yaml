@@ -2,7 +2,7 @@
 # This operator decrypts SOPS-encrypted secrets in-cluster
 name: cit-sops-operator
 
-namespace: sops-system
+defaultNamespace: sops-system
 
 helm:
   repo: https://isindir.github.io/sops-secrets-operator/
