@@ -46,8 +46,8 @@ cit-teaching-platform/
 
 | Namespace | Ingress URL | Purpose |
 |-----------|-------------|---------|
-| cit-auth | `auth.cit.<your-domain>` | Authentik |
-| cit-jhub | `jhub.cit.<your-domain>` | JupyterHub |
+| cit-auth | `auth.dshl.unileoben.ac.at` | Authentik |
+| cit-jhub | `jhub.dshl.unileoben.ac.at` | JupyterHub |
 
 ## Quick Start
 
@@ -74,7 +74,7 @@ metadata:
   name: cit-teaching-platform
   namespace: fleet-local
 spec:
-  repo: https://github.com/your-org/cit-teaching-platform
+  repo: https://github.com/bjoernellens1/cit-teaching-platform
   branch: main
   paths:
     - bundles/
