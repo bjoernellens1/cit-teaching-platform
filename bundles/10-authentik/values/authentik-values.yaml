@@ -64,10 +64,10 @@ server:
     enabled: true
     ingressClassName: nginx
     hosts:
-      - host: auth.dshl.unileoben.ac.at
-        paths:
-          - path: /
-            pathType: Prefix
+      - auth.dshl.unileoben.ac.at
+    paths:
+      - /
+    pathType: Prefix
     tls:
       - secretName: dshl-wildcard
         hosts:
