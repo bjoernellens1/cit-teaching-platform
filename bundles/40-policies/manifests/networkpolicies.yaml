@@ -233,10 +233,14 @@ spec:
         - podSelector:
             matchLabels:
               component: hub
-    # Allow internet access for pip/conda
+    # Allow internet access for pip/conda (exclude private IPs)
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
       ports:
         - protocol: TCP
           port: 443
