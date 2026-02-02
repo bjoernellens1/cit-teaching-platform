@@ -13,6 +13,10 @@ helm:
     - values/jupyterhub-values.yaml
 
 # Depends on Authentik for OIDC and SOPS operator for secret decryption
+# Include SopsSecret manifest for encrypted secrets
+resources:
+  - path: jupyterhub-sopssecret.yaml
+
 dependsOn:
   - name: cit-authentik
   - name: cit-sops-operator

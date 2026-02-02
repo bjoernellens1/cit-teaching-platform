@@ -55,6 +55,7 @@ age.key
 *.agekey
 *.gpg
 *.asc
+sops-age-key.txt
 
 # Test outputs
 coverage/

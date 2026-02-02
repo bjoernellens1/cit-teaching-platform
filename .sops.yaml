@@ -3,15 +3,15 @@
 
 # Age key configuration
 creation_rules:
-  # Encrypt SopsSecret CRs in sopssecrets directories (new format)
+  # Encrypt SopsSecret CRs (new format)
   # Only encrypt the stringData values within spec.secretTemplates
-  - path_regex: bundles/.*/secrets/sopssecrets/.*\.yaml$
+  - path_regex: bundles/.*-sopssecret\.yaml$
     encrypted_regex: "^(stringData)$"
-    age: age1u7wrq6yktkprvkce38vhz358fmx7gunkyd0aflvu84d3wtvrrd7qvqwe26
+    age: age1h05qj66un22scwapuhyl76skls7ll235vlu27cjwkk5tpav6sqmsx3zp6a
 
   # Legacy: Encrypt all files in sops directories (old format - to be migrated)
   - path_regex: .*\.enc\.yaml$
-    age: age1u7wrq6yktkprvkce38vhz358fmx7gunkyd0aflvu84d3wtvrrd7qvqwe26
+    age: age1h05qj66un22scwapuhyl76skls7ll235vlu27cjwkk5tpav6sqmsx3zp6a
 
 # Alternative: Use multiple keys for different environments
 # creation_rules:
