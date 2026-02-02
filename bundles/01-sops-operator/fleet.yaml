@@ -1,0 +1,24 @@
+# Fleet bundle configuration for SOPS Secrets Operator
+# This operator decrypts SOPS-encrypted secrets in-cluster
+name: cit-sops-operator
+
+namespace: sops-system
+
+helm:
+  repo: https://isindir.github.io/sops-secrets-operator/
+  chart: sops-secrets-operator
+  version: 0.18.5
+  releaseName: sops-secrets-operator
+  valuesFiles:
+    - values/values.yaml
+
+# Deploy after CRDs are available
+dependsOn:
+  - name: cit-crds
+
+# Target cluster selection
+targets:
+  - name: cit-clusters
+    clusterSelector:
+      matchLabels:
+        env: cit-teaching

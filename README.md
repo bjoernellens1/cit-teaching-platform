@@ -23,7 +23,7 @@ A GitOps-managed Kubernetes deployment for the CIT teaching environment featurin
 
 | Component | Description |
 |-----------|-------------|
-| authentik | Server + Worker + Outpost + Postgres + Redis |
+| authentik | Server + Worker + Outpost + Postgres |
 | jupyterhub | Hub + Configurable HTTP Proxy + User Pods |
 | storage | Per-user PVC homes + Shared course volumes (RWX) |
 
@@ -223,7 +223,6 @@ For a lecture with ~200 simultaneous logins:
 | Authentik Server | 2-3 | Stateless, horizontal scaling |
 | Authentik Worker | 2 | Handle flow/event processing |
 | PostgreSQL | 1 | Sized adequately with backups |
-| Redis | 1 | HA if available |
 | JupyterHub | 1 | Single hub with autoscaling |
 
 ---

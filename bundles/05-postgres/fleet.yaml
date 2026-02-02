@@ -1,16 +1,16 @@
-# Fleet bundle configuration for Authentik
-# Bundle name: cit-authentik
-name: cit-authentik
+# Fleet bundle configuration for PostgreSQL
+# Bundle name: cit-postgres
+name: cit-postgres
 
-namespace: cit-auth
+namespace: cit-postgres
 
 helm:
-  repo: https://charts.goauthentik.io
-  chart: authentik
-  version: 2025.12.2
-  releaseName: authentik
+  repo: https://charts.bitnami.com/bitnami
+  chart: postgresql
+  version: 15.2.5
+  releaseName: postgresql
   valuesFiles:
-    - values/authentik-values.yaml
+    - values/values.yaml
 
 # Depends on CRDs and SOPS operator for secret decryption
 dependsOn:

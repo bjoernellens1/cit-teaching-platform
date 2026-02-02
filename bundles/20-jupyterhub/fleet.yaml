@@ -1,19 +1,21 @@
 # Fleet bundle configuration for JupyterHub
 # Bundle name: cit-jupyterhub
+name: cit-jupyterhub
 
 namespace: cit-jhub
 
 helm:
   repo: https://hub.jupyter.org/helm-chart/
   chart: jupyterhub
-  version: 3.3.7
+  version: 4.3.2
   releaseName: jupyterhub
   valuesFiles:
     - values/jupyterhub-values.yaml
 
-# Depends on Authentik for OIDC
+# Depends on Authentik for OIDC and SOPS operator for secret decryption
 dependsOn:
-  - name: 10-authentik
+  - name: cit-authentik
+  - name: cit-sops-operator
 
 # Target cluster selection
 targets:

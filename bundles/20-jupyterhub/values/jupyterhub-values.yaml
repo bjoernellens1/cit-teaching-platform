@@ -23,6 +23,8 @@ hub:
       storageClassName: ""  # Use default
       storage: 1Gi
   
+  existingSecret: jupyterhub-secrets
+  
   # ==========================================================================
   # AUTHENTICATION - Authentik OIDC
   # ==========================================================================
@@ -266,7 +268,7 @@ ingress:
   hosts:
     - jhub.dshl.unileoben.ac.at
   tls:
-    - secretName: jupyterhub-tls
+    - secretName: dshl-wildcard
       hosts:
         - jhub.dshl.unileoben.ac.at
 

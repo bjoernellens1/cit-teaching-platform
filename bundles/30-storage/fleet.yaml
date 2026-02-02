@@ -1,5 +1,6 @@
 # Fleet bundle configuration for Storage
 # Bundle name: cit-storage
+name: cit-storage
 
 namespace: cit-jhub
 
@@ -13,7 +14,7 @@ paths:
 
 # Can be deployed in parallel with JupyterHub
 dependsOn:
-  - name: 00-crds
+  - name: cit-crds
 
 # Target cluster selection
 targets:

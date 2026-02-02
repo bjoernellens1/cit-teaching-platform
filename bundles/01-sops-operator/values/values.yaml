@@ -1,0 +1,41 @@
+# SOPS Secrets Operator Helm values
+# Configures the operator to use age key for decryption
+
+# Age key reference - this secret must be created manually (bootstrap step)
+# kubectl -n sops-system create secret generic sops-age-key --from-file=age.agekey=age.key
+secretsAsFiles:
+  - name: age-key
+    mountPath: /etc/sops-age-key
+    secretName: sops-age-key
+
+# Environment variables to configure SOPS to use the age key
+extraEnv:
+  - name: SOPS_AGE_KEY_FILE
+    value: /etc/sops-age-key/age.agekey
+
+# Operator settings
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+# Watch all namespaces for SopsSecret resources
+watchNamespaces: []
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL

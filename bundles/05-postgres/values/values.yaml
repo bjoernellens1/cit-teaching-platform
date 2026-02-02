@@ -1,0 +1,29 @@
+# PostgreSQL Helm values for CIT Teaching Platform
+# Using Bitnami PostgreSQL chart
+
+global:
+  storageClass: longhorn
+
+auth:
+  username: authentik
+  database: authentik
+  # Password should be provided via existingSecret in production
+  existingSecret: postgres-credentials
+
+primary:
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: longhorn
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+# Production settings
+# backup:
+#   enabled: true

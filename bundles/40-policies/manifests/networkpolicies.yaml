@@ -70,7 +70,7 @@ spec:
       ports:
         - protocol: TCP
           port: 443
-    # Allow internal communication (postgres, redis)
+    # Allow internal communication (postgres)
     - to:
         - podSelector: {}
 

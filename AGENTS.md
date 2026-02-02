@@ -83,7 +83,7 @@ This repository is deployed via Fleet. To test:
 ## Important Notes
 
 - **Do not** commit unencrypted secrets
-- **Always** use SOPS for secret management
+- **Always** use SOPS for secret management, make sure fleet.yaml bundles have a name: field
 - **Preserve** the bundle naming convention (##-name)
 - **Test** authentication flows after changes to Authentik config
 - **Coordinate** with Uni Keycloak admins for SSO changes

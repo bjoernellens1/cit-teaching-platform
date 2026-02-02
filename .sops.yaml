@@ -2,11 +2,16 @@
 # This file configures SOPS for secret encryption in this repository
 
 # Age key configuration
-# Replace with your actual age public key
 creation_rules:
-  # Encrypt all files in sops directories
+  # Encrypt SopsSecret CRs in sopssecrets directories (new format)
+  # Only encrypt the stringData values within spec.secretTemplates
+  - path_regex: bundles/.*/secrets/sopssecrets/.*\.yaml$
+    encrypted_regex: "^(stringData)$"
+    age: age1hwehr5ztfavd0p7x7n4fw8gfvzl05pj2u9v80xwqvhgnnmdfkexqspr0z6
+
+  # Legacy: Encrypt all files in sops directories (old format - to be migrated)
   - path_regex: .*\.enc\.yaml$
-    age: age1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    age: age1hwehr5ztfavd0p7x7n4fw8gfvzl05pj2u9v80xwqvhgnnmdfkexqspr0z6
 
 # Alternative: Use multiple keys for different environments
 # creation_rules:
@@ -19,3 +24,4 @@ creation_rules:
 # creation_rules:
 #   - path_regex: .*\.enc\.yaml$
 #     pgp: 'FINGERPRINT1,FINGERPRINT2'
+

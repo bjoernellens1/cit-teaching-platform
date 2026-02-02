@@ -1,4 +1,5 @@
 # Root Fleet configuration for CIT Teaching Platform
+name: cit-platform-root
 # This file configures Fleet to discover and deploy all bundles in this repository
 
 defaultNamespace: fleet-default

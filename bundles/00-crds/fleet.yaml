@@ -1,16 +1,17 @@
 # Fleet bundle configuration for CRDs
 # This bundle deploys cert-manager CRDs if not managed cluster-wide elsewhere
+name: cit-crds
 
 namespace: cert-manager
 
-helm:
-  repo: https://charts.jetstack.io
-  chart: cert-manager
-  version: 1.14.4
-  releaseName: cert-manager
-  # Only install CRDs from this bundle
-  values:
-    installCRDs: true
+# helm:
+#   repo: https://charts.jetstack.io
+#   chart: cert-manager
+#   version: 1.14.4
+#   releaseName: cert-manager
+#   # Only install CRDs from this bundle
+#   values:
+#     installCRDs: true
 
 # Deploy CRDs before other bundles
 dependsOn: []
