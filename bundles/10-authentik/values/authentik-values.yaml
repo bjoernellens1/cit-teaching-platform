@@ -1,4 +1,9 @@
 # Authentik Helm values for CIT Teaching Platform
+# Using goauthentik/authentik chart
+global:
+  postgresql:
+    auth:
+      password: "dummy-password-for-helm-validation"
 # This configuration is optimized for teaching workloads with HA settings
 
 # =============================================================================
@@ -127,6 +132,8 @@ postgresql:
   auth:
     username: authentik
     database: authentik
+    # Password will be taken from existingSecret, but Helm chart requires a value for validation
+    password: "dummy-password-for-helm-validation"
     # Password provided via existingSecret
     existingSecret: authentik-postgres-credentials
     secretKeys:
