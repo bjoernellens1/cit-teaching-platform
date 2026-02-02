@@ -3,6 +3,9 @@
 
 global:
   storageClass: longhorn
+  postgresql:
+    auth:
+      password: "dummy-password-for-helm-validation"
 
 auth:
   username: authentik
