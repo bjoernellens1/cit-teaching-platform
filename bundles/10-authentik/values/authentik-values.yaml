@@ -62,14 +62,14 @@ server:
     enabled: true
     ingressClassName: nginx
     hosts:
-      - host: auth.cit.example.com  # UPDATE: Replace with your domain
+      - host: auth.dshl.unileoben.ac.at
         paths:
           - path: /
             pathType: Prefix
     tls:
       - secretName: authentik-tls
         hosts:
-          - auth.cit.example.com  # UPDATE: Replace with your domain
+          - auth.dshl.unileoben.ac.at
 
 # =============================================================================
 # WORKER CONFIGURATION (HA)

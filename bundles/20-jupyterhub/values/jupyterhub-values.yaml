@@ -32,10 +32,9 @@ hub:
     
     GenericOAuthenticator:
       # Authentik OIDC endpoints
-      # UPDATE: Replace with your domain
-      authorize_url: https://auth.cit.example.com/application/o/authorize/
-      token_url: https://auth.cit.example.com/application/o/token/
-      userdata_url: https://auth.cit.example.com/application/o/userinfo/
+      authorize_url: https://auth.dshl.unileoben.ac.at/application/o/authorize/
+      token_url: https://auth.dshl.unileoben.ac.at/application/o/token/
+      userdata_url: https://auth.dshl.unileoben.ac.at/application/o/userinfo/
       
       # OAuth2 client credentials (from Authentik)
       client_id: jupyterhub
@@ -265,11 +264,11 @@ ingress:
   enabled: true
   ingressClassName: nginx
   hosts:
-    - jhub.cit.example.com  # UPDATE: Replace with your domain
+    - jhub.dshl.unileoben.ac.at
   tls:
     - secretName: jupyterhub-tls
       hosts:
-        - jhub.cit.example.com  # UPDATE: Replace with your domain
+        - jhub.dshl.unileoben.ac.at
 
 # =============================================================================
 # PRE-PULLER - Reduce spawn time
