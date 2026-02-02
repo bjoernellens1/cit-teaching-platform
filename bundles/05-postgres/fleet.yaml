@@ -2,7 +2,7 @@
 # Bundle name: cit-postgres
 name: cit-postgres
 
-namespace: cit-postgres
+defaultNamespace: cit-postgres
 
 helm:
   repo: https://charts.bitnami.com/bitnami

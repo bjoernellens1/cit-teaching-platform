@@ -159,7 +159,7 @@ kubectl get pods -n cit-jhub -l component=singleuser-server
 
 ### First-time Login
 
-1. User visits `jhub.cit.<domain>`
+1. User visits `jhub.dshl.unileoben.ac.at`
 2. Redirected to Authentik → "Login with University SSO"
 3. Authenticated via Uni Keycloak
 4. If not in any course group, prompted with enrollment flow:

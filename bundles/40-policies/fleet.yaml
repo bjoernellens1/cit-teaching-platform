@@ -3,7 +3,7 @@
 name: cit-policies
 
 # Applied to both namespaces
-namespace: ""
+defaultNamespace: ""
 
 # Raw manifests (no Helm chart)
 helm:

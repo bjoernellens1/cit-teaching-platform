@@ -2,7 +2,7 @@
 # Bundle name: cit-jupyterhub
 name: cit-jupyterhub
 
-namespace: cit-jhub
+defaultNamespace: cit-jhub
 
 helm:
   repo: https://hub.jupyter.org/helm-chart/

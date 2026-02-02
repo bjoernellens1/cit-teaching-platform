@@ -2,7 +2,7 @@
 # This bundle deploys cert-manager CRDs if not managed cluster-wide elsewhere
 name: cit-crds
 
-namespace: cert-manager
+defaultNamespace: cert-manager
 
 # helm:
 #   repo: https://charts.jetstack.io

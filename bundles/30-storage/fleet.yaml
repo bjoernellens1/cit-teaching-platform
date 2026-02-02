@@ -2,7 +2,7 @@
 # Bundle name: cit-storage
 name: cit-storage
 
-namespace: cit-jhub
+defaultNamespace: cit-jhub
 
 # Raw manifests (no Helm chart)
 helm:

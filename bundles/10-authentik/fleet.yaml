@@ -2,7 +2,7 @@
 # Bundle name: cit-authentik
 name: cit-authentik
 
-namespace: cit-auth
+defaultNamespace: cit-auth
 
 helm:
   repo: https://charts.goauthentik.io
