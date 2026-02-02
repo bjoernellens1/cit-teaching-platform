@@ -39,7 +39,8 @@ hub:
       userdata_url: https://auth.dshl.unileoben.ac.at/application/o/userinfo/
       
       # OAuth2 client credentials (from Authentik)
-      client_id: jupyterhub
+      client_id: LZwSaXX9KYbMWUhdlwGbvbREWYKK55DXYYzSJoo0
+      login_service: Authentik
       # client_secret provided via extraEnv from secret
       
       # Scopes to request
