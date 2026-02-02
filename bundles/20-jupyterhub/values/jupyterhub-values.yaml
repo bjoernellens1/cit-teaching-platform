@@ -164,8 +164,8 @@ proxy:
 singleuser:
   # Default notebook image
   image:
-    name: jupyter/datascience-notebook
-    tag: "2024-02-26"
+    name: quay.io/jupyter/datascience-notebook
+    tag: "2026-02-02"
   
   # Resource limits per user
   cpu:
