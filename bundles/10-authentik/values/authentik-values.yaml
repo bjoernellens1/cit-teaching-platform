@@ -56,13 +56,12 @@ server:
     minAvailable: 1
   
   # Probes for health checking
+  # Note: Don't set 'enabled: true' as it's not a valid K8s field and causes Fleet drift
   livenessProbe:
-    enabled: true
     initialDelaySeconds: 30
     periodSeconds: 10
   
   readinessProbe:
-    enabled: true
     initialDelaySeconds: 30
     periodSeconds: 10
   
