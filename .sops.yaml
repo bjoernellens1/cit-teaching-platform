@@ -7,11 +7,11 @@ creation_rules:
   # Only encrypt the stringData values within spec.secretTemplates
   - path_regex: bundles/.*/secrets/sopssecrets/.*\.yaml$
     encrypted_regex: "^(stringData)$"
-    age: age1hwehr5ztfavd0p7x7n4fw8gfvzl05pj2u9v80xwqvhgnnmdfkexqspr0z6
+    age: age1u7wrq6yktkprvkce38vhz358fmx7gunkyd0aflvu84d3wtvrrd7qvqwe26
 
   # Legacy: Encrypt all files in sops directories (old format - to be migrated)
   - path_regex: .*\.enc\.yaml$
-    age: age1hwehr5ztfavd0p7x7n4fw8gfvzl05pj2u9v80xwqvhgnnmdfkexqspr0z6
+    age: age1u7wrq6yktkprvkce38vhz358fmx7gunkyd0aflvu84d3wtvrrd7qvqwe26
 
 # Alternative: Use multiple keys for different environments
 # creation_rules:
