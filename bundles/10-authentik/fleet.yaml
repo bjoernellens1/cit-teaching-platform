@@ -11,6 +11,11 @@ helm:
   releaseName: authentik
   valuesFiles:
     - values/authentik-values.yaml
+  values:
+    global:
+      postgresql:
+        auth:
+          password: "dummy-password-for-helm-validation"
 
 # Include SOPS secret manifests
 resources:
