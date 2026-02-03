@@ -244,7 +244,7 @@ hub:
                   "cpu_guarantee": 4,
                   "mem_limit": "48G",
                   "mem_guarantee": "8G",
-                  "extra_resource_limits": {"nvidia.com/mig-2g.10gb": 1},
+                  "extra_resource_limits": {"nvidia.com/mig-1g.10gb": 1},
                   "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-pytorch-code"
               }
           },
@@ -257,7 +257,7 @@ hub:
                   "cpu_guarantee": 4,
                   "mem_limit": "48G",
                   "mem_guarantee": "8G",
-                  "extra_resource_limits": {"nvidia.com/mig-2g.10gb": 1},
+                  "extra_resource_limits": {"nvidia.com/mig-1g.10gb": 1},
                   "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-tf-code"
               }
           },
