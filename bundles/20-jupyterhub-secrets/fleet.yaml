@@ -15,7 +15,7 @@ targets:
 
 helm:
   # Install PostgreSQL from Bitnami chart
-  repo: oci://registry-1.docker.io/bitnami/charts
+  repo: https://charts.bitnami.com/bitnami
   chart: postgresql
   version: 16.2.5
   releaseName: jupyterhub-postgresql
