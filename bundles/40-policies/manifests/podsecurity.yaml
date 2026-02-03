@@ -61,18 +61,18 @@
 # SECURITY POLICY FOR SERVICE ACCOUNTS
 # =============================================================================
 
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: default
-  namespace: cit-auth
-automountServiceAccountToken: false
+# ---
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
+#   name: default
+#   namespace: cit-auth
+# automountServiceAccountToken: false
 
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: default
-  namespace: cit-jhub
-automountServiceAccountToken: false
+# ---
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
+#   name: default
+#   namespace: cit-jhub
+# automountServiceAccountToken: false
