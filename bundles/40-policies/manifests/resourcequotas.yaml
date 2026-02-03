@@ -43,8 +43,8 @@ spec:
     # User pods are managed separately via spawner limits
     
     # Reasonable limits for ~100 concurrent users
-    requests.cpu: "200"
-    requests.memory: 400Gi
+    requests.cpu: "1"
+    requests.memory: 1Gi
     limits.cpu: "400"
     limits.memory: 800Gi
     
@@ -74,8 +74,8 @@ spec:
         cpu: 500m
         memory: 1Gi
       max:
-        cpu: "8"
-        memory: 16Gi
+        cpu: "64"
+        memory: 256Gi
       min:
         cpu: 100m
         memory: 256Mi
