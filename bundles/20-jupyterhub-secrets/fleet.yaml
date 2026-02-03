@@ -20,6 +20,9 @@ helm:
   version: 16.2.5
   releaseName: jupyterhub-postgresql
   values:
+    # Use postgresql 16 explicitly
+    image:
+      tag: 16.2.0-debian-11-r1
     fullnameOverride: "jupyterhub-postgresql"
     auth:
       username: jupyterhub
