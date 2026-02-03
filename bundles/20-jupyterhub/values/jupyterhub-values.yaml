@@ -16,12 +16,15 @@ hub:
       cpu: 1000m
       memory: 1Gi
   
-  # Database configuration
+  # Database configuration - PostgreSQL for 300 users
   db:
-    type: sqlite-pvc
-    pvc:
-      storageClassName: "longhorn"  # Use longhorn
-      storage: 1Gi
+    type: postgres
+    url: "postgresql+psycopg2://jupyterhub@jupyterhub-postgresql:5432/jupyterhub"
+    password:
+      valueFrom:
+        secretKeyRef:
+          name: jupyterhub-postgres-credentials
+          key: password
   
   existingSecret: jupyterhub-secrets
   

@@ -13,9 +13,10 @@ helm:
     - values/jupyterhub-values.yaml
 
 # Depends on Authentik for OIDC and SOPS operator for secret decryption
-# Include SopsSecret manifest for encrypted secrets
+# Include SopsSecret manifest for encrypted secrets and PostgreSQL deployment
 resources:
   - path: jupyterhub-sopssecret.yaml
+  - path: jupyterhub-postgres.yaml
 
 dependsOn:
   - name: cit-authentik
