@@ -1,0 +1,14 @@
+# Fleet bundle for JupyterHub secrets and external resources
+name: cit-jupyterhub-secrets
+defaultNamespace: cit-jhub
+
+# Depends on SOPS operator for secret decryption
+dependsOn:
+  - name: cit-sops-operator
+
+# Target cluster selection
+targets:
+  - name: cit-clusters
+    clusterSelector:
+      matchLabels:
+        env: cit-teaching

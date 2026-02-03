@@ -14,12 +14,10 @@ helm:
 
 # Depends on Authentik for OIDC and SOPS operator for secret decryption
 # Include SopsSecret manifest for encrypted secrets and PostgreSQL deployment
-resources:
-  - path: manifests
-
 dependsOn:
   - name: cit-authentik
   - name: cit-sops-operator
+  - name: cit-jupyterhub-secrets
 
 # Target cluster selection
 targets:
