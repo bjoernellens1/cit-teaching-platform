@@ -42,6 +42,13 @@ cit-teaching-platform/
     40-policies/                     # Network policies & quotas
 ```
 
+### Component Documentation
+
+| Component | README | Description |
+|-----------|--------|-------------|
+| **Authentik** | [bundles/10-authentik/README.md](bundles/10-authentik/README.md) | Identity provider, SSO, course enrollment |
+| **JupyterHub** | [bundles/20-jupyterhub/README.md](bundles/20-jupyterhub/README.md) | Interactive computing, profiles, storage |
+
 ## Namespaces & Ingress
 
 | Namespace | Ingress URL | Purpose |

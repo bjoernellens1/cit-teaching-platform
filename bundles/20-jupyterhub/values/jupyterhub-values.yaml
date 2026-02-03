@@ -163,12 +163,19 @@ hub:
           # Set environment for init container
           spawner.environment["INIT_DIRS"] = " ".join(init_dirs)
           
-          # Add volumes (safely initialize lists if not present)
+          # Add volumes (safely handle if volumes/volume_mounts are dict or list)
           if volumes:
-              spawner.volumes = getattr(spawner, 'volumes', []) or []
-              spawner.volume_mounts = getattr(spawner, 'volume_mounts', []) or []
-              spawner.volumes.extend(volumes)
-              spawner.volume_mounts.extend(volume_mounts)
+              existing_volumes = getattr(spawner, 'volumes', None)
+              existing_mounts = getattr(spawner, 'volume_mounts', None)
+              
+              # Convert to list if dict or None
+              if not isinstance(existing_volumes, list):
+                  existing_volumes = []
+              if not isinstance(existing_mounts, list):
+                  existing_mounts = []
+              
+              spawner.volumes = existing_volumes + volumes
+              spawner.volume_mounts = existing_mounts + volume_mounts
           
           # Log for debugging
           spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}, privileged: {is_privileged}")
