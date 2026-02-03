@@ -388,7 +388,7 @@ singleuser:
         - name: INIT_DIRS
           value: ""  # Populated by pre_spawn_hook
       volumeMounts:
-        - name: volume-{username}
+        - name: volume
           mountPath: /home/jovyan
   
   # Profile list is defined dynamically in hub.extraConfig.profile_list_hook
