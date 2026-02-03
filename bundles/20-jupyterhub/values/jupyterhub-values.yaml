@@ -17,14 +17,10 @@ hub:
       memory: 1Gi
   
   # Database configuration - PostgreSQL for 300 users
+  # Password provided via PGPASSWORD environment variable in extraEnv
   db:
     type: postgres
     url: "postgresql+psycopg2://jupyterhub@jupyterhub-postgresql:5432/jupyterhub"
-    password:
-      valueFrom:
-        secretKeyRef:
-          name: jupyterhub-postgres-credentials
-          key: password
   
   existingSecret: jupyterhub-secrets
   
@@ -299,6 +295,12 @@ hub:
   
   # Environment variables from secrets
   extraEnv:
+    # PostgreSQL password for hub database
+    PGPASSWORD:
+      valueFrom:
+        secretKeyRef:
+          name: jupyterhub-postgres-credentials
+          key: password
     OAUTH_CLIENT_SECRET:
       valueFrom:
         secretKeyRef:
