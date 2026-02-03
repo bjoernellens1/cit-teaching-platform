@@ -5,7 +5,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: jupyterhub-shared
-  namespace: jupyterhub
+  namespace: cit-jhub
   labels:
     app: jupyterhub
     component: shared-storage
