@@ -18,6 +18,7 @@ dependsOn:
   - name: cit-authentik
   - name: cit-sops-operator
   - name: cit-jupyterhub-secrets
+  - name: cit-jupyterhub-postgres
 
 # Target cluster selection
 targets:
