@@ -2,6 +2,29 @@
 
 A GitOps-managed Kubernetes deployment for the CIT teaching environment featuring JupyterHub with Authentik identity management.
 
+## 📚 Documentation
+
+Comprehensive documentation for all user roles:
+
+- **[User Guide](docs/USER_GUIDE.md)** - Getting started, using JupyterHub, storage, profiles
+- **[Admin Guide](docs/ADMIN_GUIDE.md)** - Platform administration, course management, operations
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Architecture, development setup, customization
+- **[Infrastructure Guide](docs/INFRASTRUCTURE.md)** - Deployment, networking, storage, HA, DR
+- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Security Guide](docs/SECURITY.md)** - Security architecture, compliance, incident response
+- **[SOPS Bootstrap Guide](docs/BOOTSTRAP-SOPS.md)** - Initial secret setup
+
+## Quick Links
+
+| For... | Start Here |
+|--------|-----------|
+| 🎓 **Students/Users** | [User Guide](docs/USER_GUIDE.md) → [Getting Started](docs/USER_GUIDE.md#getting-started) |
+| 👨‍🏫 **Course Instructors** | [Admin Guide](docs/ADMIN_GUIDE.md) → [Course Management](docs/ADMIN_GUIDE.md#course-management) |
+| 🔧 **Platform Admins** | [Admin Guide](docs/ADMIN_GUIDE.md) → [Operations](docs/ADMIN_GUIDE.md#monitoring-and-maintenance) |
+| 💻 **Developers** | [Developer Guide](docs/DEVELOPER_GUIDE.md) → [Development Setup](docs/DEVELOPER_GUIDE.md#development-environment-setup) |
+| 🏗️ **Infrastructure Team** | [Infrastructure Guide](docs/INFRASTRUCTURE.md) → [Initial Deployment](docs/INFRASTRUCTURE.md#initial-deployment) |
+| 🆘 **Need Help?** | [Troubleshooting Guide](docs/TROUBLESHOOTING.md) |
+
 ## Architecture Overview
 
 ### Identity Chain
@@ -21,229 +44,167 @@ A GitOps-managed Kubernetes deployment for the CIT teaching environment featurin
 
 ### Workloads
 
-| Component | Description |
-|-----------|-------------|
-| authentik | Server + Worker + Outpost + Postgres |
-| jupyterhub | Hub + Configurable HTTP Proxy + User Pods |
-| storage | Per-user PVC homes + Shared course volumes (RWX) |
+| Component | Description | Documentation |
+|-----------|-------------|---------------|
+| **Authentik** | Server + Worker + Outpost + Postgres | [bundles/10-authentik/README.md](bundles/10-authentik/README.md) |
+| **JupyterHub** | Hub + Configurable HTTP Proxy + User Pods | [bundles/20-jupyterhub/README.md](bundles/20-jupyterhub/README.md) |
+| **Storage** | Per-user PVC homes + Shared course volumes (RWX) | [Infrastructure Guide](docs/INFRASTRUCTURE.md#storage) |
 
 ## Repository Structure
 
 ```
 cit-teaching-platform/
-  README.md                          # This file
-  AGENTS.md                          # Agent instructions
-  fleet.yaml                         # Root Fleet configuration
-  bundles/
-    00-crds/                         # CRDs (cert-manager)
-    10-authentik/                    # Authentik deployment
-    20-jupyterhub/                   # JupyterHub deployment
-    30-storage/                      # Storage configuration
-    40-policies/                     # Network policies & quotas
+├── README.md                          # This file
+├── docs/                              # 📚 Comprehensive documentation
+│   ├── USER_GUIDE.md                 # User documentation
+│   ├── ADMIN_GUIDE.md                # Administrator documentation
+│   ├── DEVELOPER_GUIDE.md            # Developer documentation
+│   ├── INFRASTRUCTURE.md             # Infrastructure documentation
+│   ├── TROUBLESHOOTING.md            # Troubleshooting guide
+│   ├── SECURITY.md                   # Security guide
+│   └── BOOTSTRAP-SOPS.md             # SOPS setup guide
+├── bundles/                           # Fleet deployment bundles
+│   ├── 00-crds/                      # Custom Resource Definitions
+│   ├── 01-sops-operator/             # SOPS operator for secret decryption
+│   ├── 10-authentik/                 # Authentik identity provider
+│   ├── 20-jupyterhub/                # JupyterHub deployment
+│   ├── 30-storage/                   # Storage configuration
+│   └── 40-policies/                  # Network policies, quotas, security
+└── fleet.yaml                         # Root Fleet configuration
 ```
 
-### Component Documentation
+## Access Points
 
-| Component | README | Description |
-|-----------|--------|-------------|
-| **Authentik** | [bundles/10-authentik/README.md](bundles/10-authentik/README.md) | Identity provider, SSO, course enrollment |
-| **JupyterHub** | [bundles/20-jupyterhub/README.md](bundles/20-jupyterhub/README.md) | Interactive computing, profiles, storage |
-
-## Namespaces & Ingress
-
-| Namespace | Ingress URL | Purpose |
-|-----------|-------------|---------|
-| cit-auth | `auth.dshl.unileoben.ac.at` | Authentik |
-| cit-jhub | `jhub.dshl.unileoben.ac.at` | JupyterHub |
+| Service | URL | Purpose | Documentation |
+|---------|-----|---------|---------------|
+| **JupyterHub** | `jhub.dshl.unileoben.ac.at` | Interactive notebooks | [User Guide](docs/USER_GUIDE.md) |
+| **Authentik** | `auth.dshl.unileoben.ac.at` | Identity management | [Admin Guide](docs/ADMIN_GUIDE.md#accessing-admin-interfaces) |
 
 ## Quick Start
 
-### Prerequisites
+### For Users
 
-- Kubernetes cluster with Fleet installed
-- cert-manager (cluster-wide)
-- SOPS with age/GPG configured for secret encryption
-- Access to Uni Keycloak for SSO configuration
+1. Navigate to [jhub.dshl.unileoben.ac.at](https://jhub.dshl.unileoben.ac.at)
+2. Click **Login** → **Login with University SSO**
+3. Complete course enrollment (first time only)
+4. Select compute profile and start coding!
 
-### Deployment
+**Full guide**: [User Guide](docs/USER_GUIDE.md)
 
-1. Clone this repository
-2. Configure SOPS secrets in `bundles/*/secrets/sops/`
-3. Update values files with your domain and credentials
-4. Register this repository with Fleet
+### For Administrators
 
+**New platform deployment**:
+1. Follow the [Infrastructure Guide](docs/INFRASTRUCTURE.md#initial-deployment)
+2. Bootstrap SOPS: [SOPS Bootstrap Guide](docs/BOOTSTRAP-SOPS.md)
+3. Configure secrets and deploy via GitOps
+
+**Adding a course**:
+1. Create Authentik group: `course-<id>`
+2. Create shared storage PVC
+3. Set course password in enrollment flow
+4. See: [Admin Guide - Course Management](docs/ADMIN_GUIDE.md#course-management)
+
+### For Developers
+
+1. Clone repository
+2. Set up local development environment: [Developer Guide](docs/DEVELOPER_GUIDE.md#development-environment-setup)
+3. Make changes and test locally
+4. Submit pull request
+
+**Full guide**: [Developer Guide](docs/DEVELOPER_GUIDE.md)
+
+## Common Operations
+
+### For Administrators
+
+**Add a course**:
 ```bash
-# Example: Apply Fleet GitRepo
-kubectl apply -f - <<EOF
-apiVersion: fleet.cattle.io/v1alpha1
-kind: GitRepo
-metadata:
-  name: cit-teaching-platform
-  namespace: fleet-local
-spec:
-  repo: https://github.com/bjoernellens1/cit-teaching-platform
-  branch: main
-  paths:
-    - bundles/
-EOF
+# See full guide in Admin Guide
+# 1. Create group in Authentik
+# 2. Add PVC to bundles/30-storage/manifests/rwx-volumes.yaml
+# 3. Set course password
+# 4. Commit and push
 ```
 
-## Configuration Files You'll Typically Modify
-
-As a CIT admin, you'll mainly work with:
-
-- `bundles/10-authentik/values/authentik-values.yaml` - Authentik configuration
-- `bundles/20-jupyterhub/values/jupyterhub-values.yaml` - JupyterHub configuration
-- `bundles/*/secrets/sops/*.enc.yaml` - Encrypted secrets
-
----
-
-## Operations Guide
-
-### Rotating Secrets
-
-#### Uni Keycloak Client Secret
-1. Generate new secret in Keycloak
-2. Update `bundles/10-authentik/secrets/sops/authentik-secrets.enc.yaml`
-3. Commit and push
-
-#### Authentik Secrets
-1. Update `bundles/10-authentik/secrets/sops/authentik-secrets.enc.yaml`
-2. Commit and push
-
-#### JupyterHub Cookie Secret
-1. Generate new secret: `openssl rand -hex 32`
-2. Update `bundles/20-jupyterhub/secrets/sops/jupyterhub-secrets.enc.yaml`
-3. Commit and push
-
-### Adding a New Course
-
-1. **Create Authentik group**: In Authentik UI, create group `course-<id>`
-2. **Add course password**: Update enrollment flow configuration
-3. **Create RWX volume**: Add volume definition to `bundles/30-storage/manifests/rwx-volumes.yaml`
-4. **Update JupyterHub mapping**: If custom profiles needed, update values
-
-Example volume addition:
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: course-<id>-shared
-  namespace: cit-jhub
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: nfs-csi
-  resources:
-    requests:
-      storage: 50Gi
-```
-
-### Managing Admins
-
-Add or remove users from the `jhub-admins` group in Authentik UI.
-
-### Troubleshooting
-
-#### Check Authentik logs
+**Monitor platform health**:
 ```bash
-kubectl logs -n cit-auth -l app.kubernetes.io/name=authentik-server -f
+kubectl get pods -A | grep -v Running
+kubectl top nodes
+kubectl get pvc -n cit-jhub
 ```
 
-#### Check JupyterHub logs
+**View logs**:
 ```bash
-kubectl logs -n cit-jhub -l component=hub -f
+# Authentik
+kubectl logs -n cit-auth -l app.kubernetes.io/component=server --tail=50
+
+# JupyterHub
+kubectl logs -n cit-jhub -l component=hub --tail=50
 ```
 
-#### Check user pod status
+**Full operations guide**: [Admin Guide](docs/ADMIN_GUIDE.md)
+
+### For Developers
+
+**Test changes locally**:
 ```bash
-kubectl get pods -n cit-jhub -l component=singleuser-server
+# Apply manifest
+kubectl apply -f bundles/30-storage/manifests/rwx-volumes.yaml
+
+# Verify
+kubectl get pvc -n cit-jhub
+
+# Deploy via Git
+git add bundles/30-storage/manifests/rwx-volumes.yaml
+git commit -m "Add course storage"
+git push
 ```
 
----
+**Customize profiles**:
+- Edit `bundles/20-jupyterhub/values/jupyterhub-values.yaml`
+- Modify `_original_profile_list` in profile hook
+- Test and deploy via Git
 
-## User Flow
-
-### First-time Login
-
-1. User visits `jhub.dshl.unileoben.ac.at`
-2. Redirected to Authentik → "Login with University SSO"
-3. Authenticated via Uni Keycloak
-4. If not in any course group, prompted with enrollment flow:
-   - Select course from dropdown
-   - Enter course password
-5. Added to course group, redirected to JupyterHub
-6. User pod spawns with:
-   - Personal home directory
-   - Course-specific shared folders mounted
-
-### Returning Users
-
-1. SSO authentication (session-based)
-2. Direct access to JupyterHub with existing group memberships
-
----
-
-## Course Enrollment Flow (Authentik)
-
-The enrollment flow is configured to:
-
-1. **Prompt**: Course selection (dropdown)
-2. **Prompt**: Password input
-3. **Script stage**: Verify password matches course
-4. **Group assignment**: Add user to `course-*` group
-5. **Redirect**: Send user to JupyterHub
-
-Groups are pre-created:
-- `course-aml`
-- `course-robotics`
-- `course-datamodeling`
-- `jhub-admins`
-
----
-
-## Directory Structure on User Pods
-
-Each user's pod has:
-
-```
-/home/jovyan/
-├── work/                    # User's work directory
-├── shared/                  # General shared space
-└── courses/
-    └── <course-id>/         # Per-course user directories
-```
-
-Shared course volumes are mounted at:
-```
-/srv/courses/<course-id>/    # RWX shared storage per course
-```
-
----
-
-## Scale Considerations
-
-For a lecture with ~200 simultaneous logins:
-
-| Component | Replicas | Notes |
-|-----------|----------|-------|
-| Authentik Server | 2-3 | Stateless, horizontal scaling |
-| Authentik Worker | 2 | Handle flow/event processing |
-| PostgreSQL | 1 | Sized adequately with backups |
-| JupyterHub | 1 | Single hub with autoscaling |
-
----
+**Full development guide**: [Developer Guide](docs/DEVELOPER_GUIDE.md)
 
 ## Security
 
-- Secrets managed with SOPS encryption
-- Network policies isolate namespaces
-- Resource quotas prevent resource exhaustion
-- Pod security policies enforce container restrictions
-- Rate limiting on Authentik for brute-force protection
+The platform implements defense-in-depth security:
 
----
+- 🔐 **Secrets**: SOPS encryption with age keys
+- 🔒 **Authentication**: University SSO via Authentik (OIDC/SAML)
+- 🛡️ **Network**: NetworkPolicies, firewall rules
+- 📦 **Containers**: Pod Security Standards, non-root containers
+- 💾 **Data**: Encryption at rest and in transit (TLS)
+- 📊 **Monitoring**: Audit logs, security alerts
+
+**Full security documentation**: [Security Guide](docs/SECURITY.md)
+
+## Support
+
+| Issue Type | Contact |
+|------------|---------|
+| 🎓 **Course/Assignment Questions** | Your course instructor |
+| 🔧 **Technical Issues** | [support@dshl.unileoben.ac.at](mailto:support@dshl.unileoben.ac.at) |
+| 🚨 **Platform Outage** | [platform-admins@dshl.unileoben.ac.at](mailto:platform-admins@dshl.unileoben.ac.at) |
+| 🐛 **Bug Reports** | [GitHub Issues](https://github.com/bjoernellens1/cit-teaching-platform/issues) |
+
+**Self-service help**: [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
+
+## Contributing
+
+We welcome contributions! See the [Developer Guide](docs/DEVELOPER_GUIDE.md#contributing) for:
+
+- Development workflow
+- Code review process
+- Commit message conventions
+- Testing requirements
 
 ## License
 
-Internal use only - CIT Teaching Platform
+Internal use only - CIT Teaching Platform  
+Maintained by CIT Platform Team
+
+---
+
+**📖 Complete Documentation**: See [docs/](docs/) directory for comprehensive guides covering all aspects of the platform.
