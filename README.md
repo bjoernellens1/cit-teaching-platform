@@ -6,10 +6,17 @@ A GitOps-managed Kubernetes deployment for the CIT teaching environment featurin
 
 Comprehensive documentation for all user roles:
 
+**→ [Complete Documentation Index](docs/README.md)** ← Start here to find the right guide for your role
+
+### Quick Access by Role
+
 - **[User Guide](docs/USER_GUIDE.md)** - Getting started, using JupyterHub, storage, profiles
 - **[Admin Guide](docs/ADMIN_GUIDE.md)** - Platform administration, course management, operations
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Architecture, development setup, customization
 - **[Infrastructure Guide](docs/INFRASTRUCTURE.md)** - Deployment, networking, storage, HA, DR
+
+### Support Documentation
+
 - **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Security Guide](docs/SECURITY.md)** - Security architecture, compliance, incident response
 - **[SOPS Bootstrap Guide](docs/BOOTSTRAP-SOPS.md)** - Initial secret setup
