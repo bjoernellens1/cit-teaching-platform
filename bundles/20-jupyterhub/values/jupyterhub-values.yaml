@@ -163,18 +163,18 @@ hub:
           # Set environment for init container
           spawner.environment["INIT_DIRS"] = " ".join(init_dirs)
           
-          # Add extra volumes using extra_volumes/extra_volume_mounts
+          # Add extra volumes using list assignment (traitlets-safe)
           # (This appends to existing volumes instead of replacing them)
           if volumes:
-              # Initialize extra_* lists if not present
-              if not hasattr(spawner, 'extra_volumes') or spawner.extra_volumes is None:
-                  spawner.extra_volumes = []
-              if not hasattr(spawner, 'extra_volume_mounts') or spawner.extra_volume_mounts is None:
-                  spawner.extra_volume_mounts = []
+              # Get current values (may be tuple or list)
+              current_volumes = list(spawner.extra_volumes or [])
+              current_mounts = list(spawner.extra_volume_mounts or [])
               
-              # Append our volumes
-              spawner.extra_volumes.extend(volumes)
-              spawner.extra_volume_mounts.extend(volume_mounts)
+              # Assign new combined list
+              spawner.extra_volumes = current_volumes + volumes
+              spawner.extra_volume_mounts = current_mounts + volume_mounts
+              
+              spawner.log.info(f"Added extra volumes: {[v.get('name') for v in volumes]}")
           
           # Log for debugging
           spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}, privileged: {is_privileged}")
