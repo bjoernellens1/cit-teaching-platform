@@ -77,13 +77,22 @@ spec:
         app.kubernetes.io/component: database
     spec:
       securityContext:
-        fsGroup: 1001
+        fsGroup: 999
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "chown -R 999:999 /var/lib/postgresql/data && chmod 700 /var/lib/postgresql/data && mkdir -p /var/lib/postgresql/data/pgdata && chmod 700 /var/lib/postgresql/data/pgdata"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
       containers:
         - name: postgresql
-          image: docker.io/bitnami/postgresql:16.6.0
+          image: postgres:16
           imagePullPolicy: IfNotPresent
           securityContext:
-            runAsUser: 1001
+            runAsUser: 999
             runAsNonRoot: true
             allowPrivilegeEscalation: false
             capabilities:
@@ -92,14 +101,8 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           env:
-            - name: BITNAMI_DEBUG
-              value: "false"
-            - name: POSTGRESQL_PORT_NUMBER
-              value: "5432"
-            - name: POSTGRESQL_VOLUME_DIR
-              value: "/bitnami/postgresql"
             - name: PGDATA
-              value: "/bitnami/postgresql/data"
+              value: "/var/lib/postgresql/data/pgdata"
             - name: POSTGRES_USER
               value: "jupyterhub"
             - name: POSTGRES_DB
@@ -109,11 +112,8 @@ spec:
                 secretKeyRef:
                   name: jupyterhub-postgres-credentials
                   key: password
-            - name: POSTGRES_POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: jupyterhub-postgres-credentials
-                  key: postgres-password
+          command: ["postgres"]
+          args: ["-c", "config_file=/etc/postgresql/conf.d/postgresql.conf"]
           ports:
             - name: postgresql
               containerPort: 5432
@@ -128,7 +128,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - exec pg_isready -U "jupyterhub" -d "dbname=jupyterhub" -h 127.0.0.1 -p 5432
+                - exec pg_isready -U "jupyterhub" -d "jupyterhub" -h 127.0.0.1 -p 5432
           readinessProbe:
             failureThreshold: 6
             initialDelaySeconds: 5
@@ -139,7 +139,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - exec pg_isready -U "jupyterhub" -d "dbname=jupyterhub" -h 127.0.0.1 -p 5432
+                - exec pg_isready -U "jupyterhub" -d "jupyterhub" -h 127.0.0.1 -p 5432
           resources:
             requests:
               cpu: 100m
@@ -149,9 +149,9 @@ spec:
               memory: 512Mi
           volumeMounts:
             - name: data
-              mountPath: /bitnami/postgresql
+              mountPath: /var/lib/postgresql/data
             - name: config
-              mountPath: /opt/bitnami/postgresql/conf/conf.d/
+              mountPath: /etc/postgresql/conf.d/
       volumes:
         - name: config
           configMap:
