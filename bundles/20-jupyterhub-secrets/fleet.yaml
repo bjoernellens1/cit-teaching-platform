@@ -14,8 +14,8 @@ targets:
         env: cit-teaching
 
 resources:
-  - jupyterhub-sopssecret.yaml
-  - shared-pvc.yaml
+  - path: jupyterhub-sopssecret.yaml
+  - path: shared-pvc.yaml
 
 helm:
   # Install PostgreSQL from Bitnami chart
