@@ -12,3 +12,35 @@ targets:
     clusterSelector:
       matchLabels:
         env: cit-teaching
+
+helm:
+  # Install PostgreSQL from Bitnami chart
+  repo: oci://registry-1.docker.io/bitnami/charts
+  chart: postgresql
+  version: 16.2.5
+  releaseName: jupyterhub-postgresql
+  values:
+    fullnameOverride: "jupyterhub-postgresql"
+    auth:
+      username: jupyterhub
+      database: jupyterhub
+      existingSecret: jupyterhub-postgres-credentials
+      secretKeys:
+        adminPasswordKey: postgres-password
+        userPasswordKey: password
+    primary:
+      persistence:
+        enabled: true
+        size: 5Gi
+        storageClass: longhorn
+      service:
+        type: ClusterIP
+        ports:
+          postgresql: 5432
+      # Ensure it runs as non-root (default in bitnami)
+      podSecurityContext:
+        fsGroup: 999
+        enabled: true
+      containerSecurityContext:
+        runAsUser: 999
+        enabled: true
