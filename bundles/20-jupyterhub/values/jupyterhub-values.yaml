@@ -137,6 +137,92 @@ hub:
     
     # Profile list hook for group-based profile filtering
     profile_list_hook: |
+      # Store the original profile list before overwriting with the hook
+      _original_profile_list = [
+          {
+              "display_name": "CPU Small",
+              "slug": "cpu-small",
+              "description": "2 CPU cores, 6 GB RAM, 10 GB storage",
+              "default": True,
+              "kubespawner_override": {
+                  "cpu_limit": 2,
+                  "cpu_guarantee": 0.5,
+                  "mem_limit": "6G",
+                  "mem_guarantee": "1G",
+              }
+          },
+          {
+              "display_name": "CPU Large",
+              "slug": "cpu-large",
+              "description": "12 CPU cores, 24 GB RAM, 100 GB storage",
+              "kubespawner_override": {
+                  "cpu_limit": 12,
+                  "cpu_guarantee": 2,
+                  "mem_limit": "24G",
+                  "mem_guarantee": "4G",
+              }
+          },
+          {
+              "display_name": "CPU XLarge",
+              "slug": "cpu-xlarge",
+              "description": "48 CPU cores, 128 GB RAM, 100 GB storage",
+              "kubespawner_override": {
+                  "cpu_limit": 48,
+                  "cpu_guarantee": 8,
+                  "mem_limit": "128G",
+                  "mem_guarantee": "16G",
+              }
+          },
+          {
+              "display_name": "GPU XSmall",
+              "slug": "gpu-xsmall",
+              "description": "8 CPU cores, 24 GB RAM, 5 GB VRAM (A100 MIG slice), 10 GB storage",
+              "kubespawner_override": {
+                  "cpu_limit": 8,
+                  "cpu_guarantee": 2,
+                  "mem_limit": "24G",
+                  "mem_guarantee": "4G",
+                  "extra_resource_limits": {"nvidia.com/mig-1g.5gb": 1}
+              }
+          },
+          {
+              "display_name": "GPU Small",
+              "slug": "gpu-small",
+              "description": "16 CPU cores, 48 GB RAM, 10 GB VRAM (A100 MIG slice), 10 GB storage",
+              "kubespawner_override": {
+                  "cpu_limit": 16,
+                  "cpu_guarantee": 4,
+                  "mem_limit": "48G",
+                  "mem_guarantee": "8G",
+                  "extra_resource_limits": {"nvidia.com/mig-2g.10gb": 1}
+              }
+          },
+          {
+              "display_name": "GPU Large",
+              "slug": "gpu-large",
+              "description": "24 CPU cores, 96 GB RAM, 1x full A100 GPU, 100 GB storage",
+              "kubespawner_override": {
+                  "cpu_limit": 24,
+                  "cpu_guarantee": 6,
+                  "mem_limit": "96G",
+                  "mem_guarantee": "16G",
+                  "extra_resource_limits": {"nvidia.com/gpu": 1}
+              }
+          },
+          {
+              "display_name": "GPU XLarge",
+              "slug": "gpu-xlarge",
+              "description": "48 CPU cores, 128 GB RAM, 2x full A100 GPUs, 100 GB storage",
+              "kubespawner_override": {
+                  "cpu_limit": 48,
+                  "cpu_guarantee": 12,
+                  "mem_limit": "128G",
+                  "mem_guarantee": "24G",
+                  "extra_resource_limits": {"nvidia.com/gpu": 2}
+              }
+          },
+      ]
+      
       async def profile_list_hook(spawner):
           """
           Filter available profiles based on user group membership.
@@ -159,17 +245,14 @@ hub:
           # Check if user has full access
           has_full_access = bool(groups & full_access_groups)
           
-          # Get all profiles from spawner
-          all_profiles = spawner.profile_list.copy()
-          
           if has_full_access:
               # Admins and powerusers see all profiles
               spawner.log.info(f"User {spawner.user.name} has full profile access (groups: {groups})")
-              return all_profiles
+              return _original_profile_list
           else:
               # Students and others see only limited profiles
               filtered_profiles = [
-                  profile for profile in all_profiles
+                  profile for profile in _original_profile_list
                   if profile.get("slug") in student_profiles
               ]
               spawner.log.info(f"User {spawner.user.name} has limited profile access (groups: {groups}), showing: {[p.get('slug') for p in filtered_profiles]}")
@@ -254,89 +337,8 @@ singleuser:
         - name: volume-{username}
           mountPath: /home/jovyan
   
-  # Profile list for different resource tiers
-  # Note: Profile visibility is controlled by the profile_list hook in hub.extraConfig
-  profileList:
-    # CPU Profiles
-    - display_name: "CPU Small"
-      slug: "cpu-small"
-      description: "2 CPU cores, 6 GB RAM, 10 GB storage"
-      default: true
-      kubespawner_override:
-        cpu_limit: 2
-        cpu_guarantee: 0.5
-        mem_limit: "6G"
-        mem_guarantee: "1G"
-        storage_capacity: "10Gi"
-    
-    - display_name: "CPU Large"
-      slug: "cpu-large"
-      description: "12 CPU cores, 24 GB RAM, 100 GB storage"
-      kubespawner_override:
-        cpu_limit: 12
-        cpu_guarantee: 2
-        mem_limit: "24G"
-        mem_guarantee: "4G"
-        storage_capacity: "100Gi"
-    
-    - display_name: "CPU XLarge"
-      slug: "cpu-xlarge"
-      description: "48 CPU cores, 128 GB RAM, 100 GB storage"
-      kubespawner_override:
-        cpu_limit: 48
-        cpu_guarantee: 8
-        mem_limit: "128G"
-        mem_guarantee: "16G"
-        storage_capacity: "100Gi"
-    
-    # GPU Profiles
-    - display_name: "GPU XSmall"
-      slug: "gpu-xsmall"
-      description: "8 CPU cores, 24 GB RAM, 5 GB VRAM (A100 MIG slice), 10 GB storage"
-      kubespawner_override:
-        cpu_limit: 8
-        cpu_guarantee: 2
-        mem_limit: "24G"
-        mem_guarantee: "4G"
-        storage_capacity: "10Gi"
-        extra_resource_limits:
-          nvidia.com/mig-1g.5gb: 1
-    
-    - display_name: "GPU Small"
-      slug: "gpu-small"
-      description: "16 CPU cores, 48 GB RAM, 10 GB VRAM (A100 MIG slice), 10 GB storage"
-      kubespawner_override:
-        cpu_limit: 16
-        cpu_guarantee: 4
-        mem_limit: "48G"
-        mem_guarantee: "8G"
-        storage_capacity: "10Gi"
-        extra_resource_limits:
-          nvidia.com/mig-2g.10gb: 1
-    
-    - display_name: "GPU Large"
-      slug: "gpu-large"
-      description: "24 CPU cores, 96 GB RAM, 1x full A100 GPU, 100 GB storage"
-      kubespawner_override:
-        cpu_limit: 24
-        cpu_guarantee: 6
-        mem_limit: "96G"
-        mem_guarantee: "16G"
-        storage_capacity: "100Gi"
-        extra_resource_limits:
-          nvidia.com/gpu: 1
-    
-    - display_name: "GPU XLarge"
-      slug: "gpu-xlarge"
-      description: "48 CPU cores, 128 GB RAM, 2x full A100 GPUs, 100 GB storage"
-      kubespawner_override:
-        cpu_limit: 48
-        cpu_guarantee: 12
-        mem_limit: "128G"
-        mem_guarantee: "24G"
-        storage_capacity: "100Gi"
-        extra_resource_limits:
-          nvidia.com/gpu: 2
+  # Profile list is defined dynamically in hub.extraConfig.profile_list_hook
+  # to support group-based filtering (students see limited profiles)
 
 # =============================================================================
 # SCHEDULING
