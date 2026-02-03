@@ -31,31 +31,31 @@ spec:
 # CIT-JHUB NAMESPACE (JupyterHub)
 # =============================================================================
 
----
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: jupyterhub-core-quota
-  namespace: cit-jhub
-spec:
-  hard:
-    # Core infrastructure limits (hub, proxy, scheduler)
-    # User pods are managed separately via spawner limits
+# ---
+# apiVersion: v1
+# kind: ResourceQuota
+# metadata:
+#   name: jupyterhub-core-quota
+#   namespace: cit-jhub
+# spec:
+#   hard:
+#     # Core infrastructure limits (hub, proxy, scheduler)
+#     # User pods are managed separately via spawner limits
     
-    # Reasonable limits for ~100 concurrent users
-    requests.cpu: "1"
-    requests.memory: 1Gi
-    limits.cpu: "400"
-    limits.memory: 800Gi
+#     # Reasonable limits for ~100 concurrent users
+#     requests.cpu: "1"
+#     requests.memory: 1Gi
+#     limits.cpu: "400"
+#     limits.memory: 800Gi
     
-    # Pod limit (hub + proxy + ~200 user pods)
-    pods: "250"
+#     # Pod limit (hub + proxy + ~200 user pods)
+#     pods: "250"
     
-    # PVC limit (user homes + course shares)
-    persistentvolumeclaims: "500"
+#     # PVC limit (user homes + course shares)
+#     persistentvolumeclaims: "500"
     
-    # Services limit
-    services: "20"
+#     # Services limit
+#     services: "20"
 
 ---
 apiVersion: v1
