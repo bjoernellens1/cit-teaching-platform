@@ -27,6 +27,7 @@ helm:
     global:
       postgresql:
         auth:
+          password: "placeholder-for-helm-validation"
           existingSecret: jupyterhub-postgres-credentials
           secretKeys:
             adminPasswordKey: postgres-password
@@ -34,6 +35,7 @@ helm:
     auth:
       username: jupyterhub
       database: jupyterhub
+      password: "placeholder-for-helm-validation"
       existingSecret: jupyterhub-postgres-credentials
       secretKeys:
         adminPasswordKey: postgres-password
