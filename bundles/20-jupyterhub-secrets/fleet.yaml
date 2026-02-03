@@ -13,6 +13,10 @@ targets:
       matchLabels:
         env: cit-teaching
 
+resources:
+  - jupyterhub-sopssecret.yaml
+  - shared-pvc.yaml
+
 helm:
   # Install PostgreSQL from Bitnami chart
   repo: https://charts.bitnami.com/bitnami
