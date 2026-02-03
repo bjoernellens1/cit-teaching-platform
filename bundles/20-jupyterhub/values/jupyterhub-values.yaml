@@ -100,24 +100,13 @@ hub:
           privileged_groups = {"jhub-admins", "jhub-powerusers"}
           is_privileged = bool(groups & privileged_groups)
           
-          # Always create work directory
+          # Always create work directory (temp is created automatically by emptyDir mount)
           init_dirs = ["/home/jovyan/work"]
           
-          # Initialize volumes and mounts lists
+          # Initialize volumes and mounts lists for conditional mounts only
+          # (temp volume is defined statically in values.yaml)
           volumes = []
           volume_mounts = []
-          
-          # Add ephemeral temp storage (emptyDir - fast, cleared on restart)
-          volumes.append({
-              "name": "temp-storage",
-              "emptyDir": {
-                  "sizeLimit": "10Gi"
-              }
-          })
-          volume_mounts.append({
-              "name": "temp-storage",
-              "mountPath": "/home/jovyan/temp"
-          })
           
           # Only mount shared storage for privileged users (not students)
           if is_privileged:
@@ -160,21 +149,20 @@ hub:
                       "readOnly": False
                   })
           
-          # Set environment for init container
+          # Set environment for postStart hook
           spawner.environment["INIT_DIRS"] = " ".join(init_dirs)
           
-          # Add extra volumes using list assignment (traitlets-safe)
-          # (This appends to existing volumes instead of replacing them)
+          # Add conditional volumes (shared, courses) by appending to spawner lists
           if volumes:
-              # Get current values (may be tuple or list)
-              current_volumes = list(spawner.extra_volumes or [])
-              current_mounts = list(spawner.extra_volume_mounts or [])
+              # Get current values as list (spawner.volumes is a traitlet list)
+              current_volumes = list(getattr(spawner, 'volumes', []) or [])
+              current_mounts = list(getattr(spawner, 'volume_mounts', []) or [])
               
-              # Assign new combined list
-              spawner.extra_volumes = current_volumes + volumes
-              spawner.extra_volume_mounts = current_mounts + volume_mounts
+              # Append and reassign
+              spawner.volumes = current_volumes + volumes
+              spawner.volume_mounts = current_mounts + volume_mounts
               
-              spawner.log.info(f"Added extra volumes: {[v.get('name') for v in volumes]}")
+              spawner.log.info(f"Added volumes: {[v.get('name') for v in volumes]}")
           
           # Log for debugging
           spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}, privileged: {is_privileged}")
@@ -356,8 +344,14 @@ singleuser:
     dynamic:
       storageClass: "longhorn"  # Use longhorn
     homeMountPath: /home/jovyan
-    extraVolumes: []
-    extraVolumeMounts: []
+    # Ephemeral temp storage - fast, cleared on pod restart
+    extraVolumes:
+      - name: temp-storage
+        emptyDir:
+          sizeLimit: 10Gi
+    extraVolumeMounts:
+      - name: temp-storage
+        mountPath: /home/jovyan/temp
   
   # Use lifecycle hooks instead of initContainers to create directories
   # postStart runs after container starts, when home volume is already mounted
