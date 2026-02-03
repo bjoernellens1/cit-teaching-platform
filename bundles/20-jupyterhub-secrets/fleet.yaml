@@ -24,6 +24,13 @@ helm:
     image:
       tag: 16.2.0-debian-11-r1
     fullnameOverride: "jupyterhub-postgresql"
+    global:
+      postgresql:
+        auth:
+          existingSecret: jupyterhub-postgres-credentials
+          secretKeys:
+            adminPasswordKey: postgres-password
+            userPasswordKey: password
     auth:
       username: jupyterhub
       database: jupyterhub
