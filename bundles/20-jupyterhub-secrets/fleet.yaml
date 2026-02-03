@@ -22,7 +22,7 @@ helm:
   values:
     # Use postgresql 16 explicitly
     image:
-      tag: 16.2.0-debian-11-r1
+      tag: latest
     fullnameOverride: "jupyterhub-postgresql"
     global:
       postgresql:
