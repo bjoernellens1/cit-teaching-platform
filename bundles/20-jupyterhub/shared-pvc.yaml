@@ -1,0 +1,18 @@
+# Shared storage PVC for JupyterHub
+# This volume is mounted as /home/jovyan/shared for admins and powerusers
+# Students (jhub-students) do NOT have access to this volume
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyterhub-shared
+  namespace: jupyterhub
+  labels:
+    app: jupyterhub
+    component: shared-storage
+spec:
+  accessModes:
+    - ReadWriteMany  # RWX - allows multiple pods to write simultaneously
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 100Gi

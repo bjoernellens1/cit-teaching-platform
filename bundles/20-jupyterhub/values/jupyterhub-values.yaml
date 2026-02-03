@@ -75,7 +75,7 @@ hub:
   # EXTRA CONFIGURATION - Pre-spawn hook for course folders
   # ==========================================================================
   extraConfig:
-    # Pre-spawn hook to create user directories and mount course volumes
+    # Pre-spawn hook to create user directories and configure storage
     pre_spawn_hook: |
       import os
       
@@ -83,22 +83,62 @@ hub:
           """
           Pre-spawn hook to configure user environment based on group membership.
           
-          This hook:
-          1. Creates user-local directories (work, shared, courses/*)
-          2. Mounts shared course volumes based on group membership
-          3. Sets environment variables for the init container
+          Storage layout:
+          - /home/jovyan (persistent, per-user Longhorn volume)
+          - /home/jovyan/temp (ephemeral, fast emptyDir - cleared on pod restart)
+          - /home/jovyan/shared (persistent, Longhorn RWX - only for admins/powerusers)
+          - /home/jovyan/courses/<course_id> (persistent, per-course Longhorn RWX)
+          
+          Groups:
+          - jhub-students: No shared storage, only home + temp + course folders
+          - jhub-admins/jhub-powerusers: Full access including global shared folder
           """
           auth_state = await spawner.user.get_auth_state()
           groups = set((auth_state or {}).get("oauth_user", {}).get("groups", []))
           
-          # Always create these user-local folders
-          init_dirs = ["/home/jovyan/work", "/home/jovyan/shared"]
+          # Groups that get access to shared storage
+          privileged_groups = {"jhub-admins", "jhub-powerusers"}
+          is_privileged = bool(groups & privileged_groups)
+          
+          # Always create work directory
+          init_dirs = ["/home/jovyan/work"]
+          
+          # Initialize volumes and mounts lists
+          volumes = []
+          volume_mounts = []
+          
+          # Add ephemeral temp storage (emptyDir - fast, cleared on restart)
+          volumes.append({
+              "name": "temp-storage",
+              "emptyDir": {
+                  "sizeLimit": "10Gi"
+              }
+          })
+          volume_mounts.append({
+              "name": "temp-storage",
+              "mountPath": "/home/jovyan/temp"
+          })
+          
+          # Only mount shared storage for privileged users (not students)
+          if is_privileged:
+              init_dirs.append("/home/jovyan/shared")
+              volumes.append({
+                  "name": "global-shared",
+                  "persistentVolumeClaim": {
+                      "claimName": "jupyterhub-shared"
+                  }
+              })
+              volume_mounts.append({
+                  "name": "global-shared",
+                  "mountPath": "/home/jovyan/shared",
+                  "readOnly": False
+              })
+              spawner.log.info(f"User {spawner.user.name} is privileged, mounting shared storage")
+          else:
+              spawner.log.info(f"User {spawner.user.name} is student, no shared storage")
           
           # Identify course groups and prepare mounts
           course_ids = []
-          volume_mounts = []
-          volumes = []
-          
           for g in groups:
               if g.startswith("course-"):
                   course_id = g.replace("course-", "")
@@ -123,7 +163,7 @@ hub:
           # Set environment for init container
           spawner.environment["INIT_DIRS"] = " ".join(init_dirs)
           
-          # Add course volumes (safely initialize lists if not present)
+          # Add volumes (safely initialize lists if not present)
           if volumes:
               spawner.volumes = getattr(spawner, 'volumes', []) or []
               spawner.volume_mounts = getattr(spawner, 'volume_mounts', []) or []
@@ -131,7 +171,7 @@ hub:
               spawner.volume_mounts.extend(volume_mounts)
           
           # Log for debugging
-          spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}")
+          spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}, privileged: {is_privileged}")
       
       c.KubeSpawner.pre_spawn_hook = pre_spawn_hook
     
@@ -321,18 +361,25 @@ singleuser:
         - /bin/sh
         - -c
         - |
-          # Create directories from INIT_DIRS environment variable
+          # Create base directories
+          mkdir -p /home/jovyan/work
+          mkdir -p /home/jovyan/temp
+          echo "Created base directories: work, temp"
+          
+          # Create additional directories from INIT_DIRS environment variable
+          # (set by pre_spawn_hook for shared/course folders)
           if [ -n "$INIT_DIRS" ]; then
             for dir in $INIT_DIRS; do
               mkdir -p "$dir"
               echo "Created directory: $dir"
             done
           fi
-          # Ensure proper ownership
+          
+          # Ensure proper ownership (jovyan user: 1000, users group: 100)
           chown -R 1000:100 /home/jovyan
       env:
         - name: INIT_DIRS
-          value: "/home/jovyan/work /home/jovyan/shared"
+          value: ""  # Populated by pre_spawn_hook
       volumeMounts:
         - name: volume-{username}
           mountPath: /home/jovyan
