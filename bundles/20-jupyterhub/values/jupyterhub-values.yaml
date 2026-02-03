@@ -134,6 +134,48 @@ hub:
           spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}")
       
       c.KubeSpawner.pre_spawn_hook = pre_spawn_hook
+    
+    # Profile list hook for group-based profile filtering
+    profile_list_hook: |
+      async def profile_list_hook(spawner):
+          """
+          Filter available profiles based on user group membership.
+          
+          Groups:
+          - jhub-admins: See all profiles
+          - jhub-powerusers: See all profiles
+          - jhub-students: See only cpu-small and gpu-small profiles
+          - Others: Default to student-level access (cpu-small, gpu-small)
+          """
+          auth_state = await spawner.user.get_auth_state()
+          groups = set((auth_state or {}).get("oauth_user", {}).get("groups", []))
+          
+          # Define full access groups
+          full_access_groups = {"jhub-admins", "jhub-powerusers"}
+          
+          # Define student-accessible profile slugs
+          student_profiles = {"cpu-small", "gpu-small"}
+          
+          # Check if user has full access
+          has_full_access = bool(groups & full_access_groups)
+          
+          # Get all profiles from spawner
+          all_profiles = spawner.profile_list.copy()
+          
+          if has_full_access:
+              # Admins and powerusers see all profiles
+              spawner.log.info(f"User {spawner.user.name} has full profile access (groups: {groups})")
+              return all_profiles
+          else:
+              # Students and others see only limited profiles
+              filtered_profiles = [
+                  profile for profile in all_profiles
+                  if profile.get("slug") in student_profiles
+              ]
+              spawner.log.info(f"User {spawner.user.name} has limited profile access (groups: {groups}), showing: {[p.get('slug') for p in filtered_profiles]}")
+              return filtered_profiles
+      
+      c.KubeSpawner.profile_list = profile_list_hook
   
   # Environment variables from secrets
   extraEnv:
@@ -213,22 +255,88 @@ singleuser:
           mountPath: /home/jovyan
   
   # Profile list for different resource tiers
+  # Note: Profile visibility is controlled by the profile_list hook in hub.extraConfig
   profileList:
-    - display_name: "Standard"
-      description: "Standard environment with 2 CPU cores and 4GB RAM"
+    # CPU Profiles
+    - display_name: "CPU Small"
+      slug: "cpu-small"
+      description: "2 CPU cores, 6 GB RAM, 10 GB storage"
       default: true
-    - display_name: "Large"
-      description: "Large environment with 4 CPU cores and 8GB RAM"
       kubespawner_override:
-        cpu_limit: 4
-        cpu_guarantee: 1
-        mem_limit: "8G"
-        mem_guarantee: "2G"
-    - display_name: "GPU (if available)"
-      description: "Environment with GPU access"
+        cpu_limit: 2
+        cpu_guarantee: 0.5
+        mem_limit: "6G"
+        mem_guarantee: "1G"
+        storage_capacity: "10Gi"
+    
+    - display_name: "CPU Large"
+      slug: "cpu-large"
+      description: "12 CPU cores, 24 GB RAM, 100 GB storage"
       kubespawner_override:
+        cpu_limit: 12
+        cpu_guarantee: 2
+        mem_limit: "24G"
+        mem_guarantee: "4G"
+        storage_capacity: "100Gi"
+    
+    - display_name: "CPU XLarge"
+      slug: "cpu-xlarge"
+      description: "48 CPU cores, 128 GB RAM, 100 GB storage"
+      kubespawner_override:
+        cpu_limit: 48
+        cpu_guarantee: 8
+        mem_limit: "128G"
+        mem_guarantee: "16G"
+        storage_capacity: "100Gi"
+    
+    # GPU Profiles
+    - display_name: "GPU XSmall"
+      slug: "gpu-xsmall"
+      description: "8 CPU cores, 24 GB RAM, 5 GB VRAM (A100 MIG slice), 10 GB storage"
+      kubespawner_override:
+        cpu_limit: 8
+        cpu_guarantee: 2
+        mem_limit: "24G"
+        mem_guarantee: "4G"
+        storage_capacity: "10Gi"
+        extra_resource_limits:
+          nvidia.com/mig-1g.5gb: 1
+    
+    - display_name: "GPU Small"
+      slug: "gpu-small"
+      description: "16 CPU cores, 48 GB RAM, 10 GB VRAM (A100 MIG slice), 10 GB storage"
+      kubespawner_override:
+        cpu_limit: 16
+        cpu_guarantee: 4
+        mem_limit: "48G"
+        mem_guarantee: "8G"
+        storage_capacity: "10Gi"
+        extra_resource_limits:
+          nvidia.com/mig-2g.10gb: 1
+    
+    - display_name: "GPU Large"
+      slug: "gpu-large"
+      description: "24 CPU cores, 96 GB RAM, 1x full A100 GPU, 100 GB storage"
+      kubespawner_override:
+        cpu_limit: 24
+        cpu_guarantee: 6
+        mem_limit: "96G"
+        mem_guarantee: "16G"
+        storage_capacity: "100Gi"
         extra_resource_limits:
           nvidia.com/gpu: 1
+    
+    - display_name: "GPU XLarge"
+      slug: "gpu-xlarge"
+      description: "48 CPU cores, 128 GB RAM, 2x full A100 GPUs, 100 GB storage"
+      kubespawner_override:
+        cpu_limit: 48
+        cpu_guarantee: 12
+        mem_limit: "128G"
+        mem_guarantee: "24G"
+        storage_capacity: "100Gi"
+        extra_resource_limits:
+          nvidia.com/gpu: 2
 
 # =============================================================================
 # SCHEDULING
