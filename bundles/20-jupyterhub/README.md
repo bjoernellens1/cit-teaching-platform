@@ -1,5 +1,10 @@
 # JupyterHub - Interactive Computing Platform
 
+> **📚 For comprehensive documentation, see:**
+> - **Users**: [User Guide](../../docs/USER_GUIDE.md)
+> - **Admins**: [Admin Guide](../../docs/ADMIN_GUIDE.md)
+> - **Developers**: [Developer Guide](../../docs/DEVELOPER_GUIDE.md) - [JupyterHub Configuration](../../docs/DEVELOPER_GUIDE.md#jupyterhub-configuration)
+
 JupyterHub provides the interactive computing environment for the CIT Teaching Platform. Students and researchers use it for data science, machine learning, and course exercises.
 
 ## Why JupyterHub?
@@ -33,10 +38,17 @@ JupyterHub provides the interactive computing environment for the CIT Teaching P
 
 ---
 
-## User Guide
+## Quick Reference
 
-### Getting Started
+This document provides component-specific technical details. For complete workflows and guides:
 
+- **Getting Started**: See [User Guide - Getting Started](../../docs/USER_GUIDE.md#getting-started)
+- **Profile Management**: See [Admin Guide - Resource Management](../../docs/ADMIN_GUIDE.md#resource-management)
+- **Troubleshooting**: See [Troubleshooting Guide - JupyterHub Issues](../../docs/TROUBLESHOOTING.md#jupyterhub-issues)
+
+### For Users
+
+**Getting Started:**
 1. Navigate to **[jhub.dshl.unileoben.ac.at](https://jhub.dshl.unileoben.ac.at)**
 2. Click **Login** (redirects to University SSO via Authentik)
 3. Select a compute profile (if options appear)
@@ -89,7 +101,9 @@ Depending on your group membership, you may see different profiles:
 
 ---
 
-## Admin Guide
+## For Administrators
+
+> **📖 See [Admin Guide](../../docs/ADMIN_GUIDE.md) for complete admin operations**
 
 ### Accessing Admin Features
 
