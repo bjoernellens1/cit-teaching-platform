@@ -1,5 +1,10 @@
 # Authentik - Identity Provider
 
+> **📚 For comprehensive documentation, see:**
+> - **Users**: [User Guide](../../docs/USER_GUIDE.md)
+> - **Admins**: [Admin Guide](../../docs/ADMIN_GUIDE.md)
+> - **Developers**: [Developer Guide](../../docs/DEVELOPER_GUIDE.md) - [Authentik Configuration](../../docs/DEVELOPER_GUIDE.md#authentik-configuration)
+
 Authentik is the identity management system for the CIT Teaching Platform. It serves as the central authentication broker between the University's SSO (Keycloak) and downstream applications like JupyterHub.
 
 ## Why Authentik?
@@ -30,23 +35,23 @@ Authentik is the identity management system for the CIT Teaching Platform. It se
 
 ---
 
-## User Guide
+## Quick Reference
 
-### Logging In
+This document provides component-specific technical details. For complete workflows and guides:
 
+- **User Login & Enrollment**: See [User Guide - First-Time Login](../../docs/USER_GUIDE.md#first-time-login)
+- **Admin Operations**: See [Admin Guide - User Management](../../docs/ADMIN_GUIDE.md#user-management)
+- **Troubleshooting**: See [Troubleshooting Guide - Authentication Issues](../../docs/TROUBLESHOOTING.md#authentication-issues)
+
+### For Users
+
+**Logging In:**
 1. Navigate to any CIT application (e.g., JupyterHub)
 2. Click **"Login with University SSO"**
 3. Enter your university credentials
 4. On first login, you may be prompted to enroll in a course
 
-### Enrolling in a Course
-
-1. After SSO authentication, select your course from the dropdown
-2. Enter the course password (provided by your instructor)
-3. You're automatically added to the course group
-4. Access course-specific resources immediately
-
-### Managing Your Account
+**Managing Your Account:**
 
 Visit **[auth.dshl.unileoben.ac.at](https://auth.dshl.unileoben.ac.at)** to:
 - View your profile information
@@ -56,7 +61,9 @@ Visit **[auth.dshl.unileoben.ac.at](https://auth.dshl.unileoben.ac.at)** to:
 
 ---
 
-## Admin Guide
+## For Administrators
+
+> **📖 See [Admin Guide](../../docs/ADMIN_GUIDE.md) for complete admin operations**
 
 ### Accessing the Admin Interface
 
