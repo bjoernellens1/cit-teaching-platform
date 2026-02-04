@@ -39,7 +39,7 @@ hub:
       userdata_url: https://auth.dshl.unileoben.ac.at/application/o/userinfo/
       
       # OAuth2 client credentials (from Authentik)
-      client_id: LZwSaXX9KYbMWUhdlwGbvbREWYKK55DXYYzSJoo0
+      client_id: 2iyGeaF0ysvTadhCopxadMp99J65hfxiS79bniI6
       login_service: Authentik
       # client_secret provided via extraEnv from secret
       
@@ -154,15 +154,53 @@ hub:
           
           # Add conditional volumes (shared, courses) by appending to spawner lists
           if volumes:
-              # Get current values as list (spawner.volumes is a traitlet list)
-              current_volumes = list(getattr(spawner, 'volumes', []) or [])
-              current_mounts = list(getattr(spawner, 'volume_mounts', []) or [])
+              # Get raw current values
+              raw_volumes = list(getattr(spawner, 'volumes', []) or [])
+              raw_mounts = list(getattr(spawner, 'volume_mounts', []) or [])
               
-              # Append and reassign
+              # Sanitize: retain only valid dicts, discard strings/others that cause crashes
+              current_volumes = [v for v in raw_volumes if isinstance(v, dict)]
+              current_mounts = [m for m in raw_mounts if isinstance(m, dict)]
+              
+              # Ensure temp-storage is present (fixing issue where it appears as string)
+              if not any(v.get('name') == 'temp-storage' for v in current_volumes):
+                  current_volumes.append({
+                      "name": "temp-storage",
+                      "emptyDir": {"sizeLimit": "10Gi"}
+                  })
+              
+              if not any(m.get('name') == 'temp-storage' for m in current_mounts):
+                  current_mounts.append({
+                      "name": "temp-storage",
+                      "mountPath": "/home/jovyan/temp"
+                  })
+
+              # Ensure home volume is present (fixing issue where it appears as string 'volume-{user_server}')
+              # This ensures persistence for /home/jovyan
+              home_mount_path = "/home/jovyan"
+              if not any(m.get('mountPath') == home_mount_path for m in current_mounts):
+                  # Define home volume name and claim name
+                  # Using typical Z2JH naming convention
+                  vol_name = f"volume-{spawner.user.name}"
+                  claim_name = f"claim-{spawner.user.name}"
+                  
+                  current_volumes.append({
+                      "name": vol_name,
+                      "persistentVolumeClaim": {
+                          "claimName": claim_name
+                      }
+                  })
+                  current_mounts.append({
+                      "name": vol_name,
+                      "mountPath": home_mount_path
+                  })
+                  spawner.log.info(f"Reinstated home volume: {vol_name} -> {claim_name}")
+
+              # Append new volumes and reassign
               spawner.volumes = current_volumes + volumes
               spawner.volume_mounts = current_mounts + volume_mounts
               
-              spawner.log.info(f"Added volumes: {[v.get('name') for v in volumes]}")
+              spawner.log.info(f"Sanitized volumes and added privileged storage: {[v.get('name') for v in volumes]}")
           
           # Log for debugging
           spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}, privileged: {is_privileged}")
@@ -491,6 +529,15 @@ prePuller:
     enabled: true
   continuous:
     enabled: true
+
+  # Explicitly pull images used in profileList (since hook hides them from chart)
+  extraImages:
+    pytorch:
+      name: ghcr.io/mul-cps/cit-jupyter-notebook
+      tag: "latest-pytorch-code"
+    tensorflow:
+      name: ghcr.io/mul-cps/cit-jupyter-notebook
+      tag: "latest-tf-code"
 
 # =============================================================================
 # DEBUG

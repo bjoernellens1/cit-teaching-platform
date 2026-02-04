@@ -103,7 +103,9 @@ cit-teaching-platform/
 **New platform deployment**:
 1. Follow the [Infrastructure Guide](docs/INFRASTRUCTURE.md#initial-deployment)
 2. Bootstrap SOPS: [SOPS Bootstrap Guide](docs/BOOTSTRAP-SOPS.md)
-3. Configure secrets and deploy via GitOps
+2. Bootstrap SOPS: [SOPS Bootstrap Guide](docs/BOOTSTRAP-SOPS.md)
+3. **Important**: Create the OAuth provider in Authentik and update the `client-secret` in `bundles/20-jupyterhub-secrets/jupyterhub-sopssecret.yaml` before initial deployment.
+4. Configure other secrets and deploy via GitOps
 
 **Adding a course**:
 1. Create Authentik group: `course-<id>`
