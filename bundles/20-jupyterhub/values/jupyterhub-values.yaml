@@ -153,21 +153,32 @@ hub:
           
           # Add conditional volumes (shared, courses) by appending to spawner lists
           if volumes:
-              # Get current values as list (spawner.volumes is a traitlet list)
-              current_volumes = list(getattr(spawner, 'volumes', []) or [])
-              current_mounts = list(getattr(spawner, 'volume_mounts', []) or [])
-
-              # DEBUG: Log types and content
-              spawner.log.info(f"DEBUG: Current volumes type: {type(current_volumes)}")
-              spawner.log.info(f"DEBUG: Current volumes: {current_volumes}")
-              spawner.log.info(f"DEBUG: Current mounts type: {type(current_mounts)}")
-              spawner.log.info(f"DEBUG: Current mounts: {current_mounts}")
+              # Get raw current values
+              raw_volumes = list(getattr(spawner, 'volumes', []) or [])
+              raw_mounts = list(getattr(spawner, 'volume_mounts', []) or [])
               
-              # Append and reassign
+              # Sanitize: retain only valid dicts, discard strings/others that cause crashes
+              current_volumes = [v for v in raw_volumes if isinstance(v, dict)]
+              current_mounts = [m for m in raw_mounts if isinstance(m, dict)]
+              
+              # Ensure temp-storage is present (fixing issue where it appears as string)
+              if not any(v.get('name') == 'temp-storage' for v in current_volumes):
+                  current_volumes.append({
+                      "name": "temp-storage",
+                      "emptyDir": {"sizeLimit": "10Gi"}
+                  })
+              
+              if not any(m.get('name') == 'temp-storage' for m in current_mounts):
+                  current_mounts.append({
+                      "name": "temp-storage",
+                      "mountPath": "/home/jovyan/temp"
+                  })
+
+              # Append new volumes and reassign
               spawner.volumes = current_volumes + volumes
               spawner.volume_mounts = current_mounts + volume_mounts
               
-              spawner.log.info(f"Added volumes: {[v.get('name') for v in volumes]}")
+              spawner.log.info(f"Sanitized volumes and added privileged storage: {[v.get('name') for v in volumes]}")
           
           # Log for debugging
           spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}, privileged: {is_privileged}")
