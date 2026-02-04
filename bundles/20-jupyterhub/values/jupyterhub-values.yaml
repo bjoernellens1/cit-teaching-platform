@@ -156,6 +156,12 @@ hub:
               # Get current values as list (spawner.volumes is a traitlet list)
               current_volumes = list(getattr(spawner, 'volumes', []) or [])
               current_mounts = list(getattr(spawner, 'volume_mounts', []) or [])
+
+              # DEBUG: Log types and content
+              spawner.log.info(f"DEBUG: Current volumes type: {type(current_volumes)}")
+              spawner.log.info(f"DEBUG: Current volumes: {current_volumes}")
+              spawner.log.info(f"DEBUG: Current mounts type: {type(current_mounts)}")
+              spawner.log.info(f"DEBUG: Current mounts: {current_mounts}")
               
               # Append and reassign
               spawner.volumes = current_volumes + volumes
