@@ -489,6 +489,15 @@ prePuller:
   continuous:
     enabled: true
 
+  # Explicitly pull images used in profileList (since hook hides them from chart)
+  extraImages:
+    pytorch:
+      name: ghcr.io/mul-cps/cit-jupyter-notebook
+      tag: "latest-pytorch-code"
+    tensorflow:
+      name: ghcr.io/mul-cps/cit-jupyter-notebook
+      tag: "latest-tf-code"
+
 # =============================================================================
 # DEBUG
 # =============================================================================
