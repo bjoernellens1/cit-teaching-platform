@@ -30,6 +30,7 @@ hub:
   config:
     JupyterHub:
       authenticator_class: generic-oauth
+      subdomain_host: "https://jhub.dshl.unileoben.ac.at"
     
     GenericOAuthenticator:
       # Authentik OIDC endpoints
@@ -473,10 +474,12 @@ ingress:
   ingressClassName: nginx
   hosts:
     - jhub.dshl.unileoben.ac.at
+    - "*.jhub.dshl.unileoben.ac.at"
   tls:
     - secretName: dshl-wildcard
       hosts:
         - jhub.dshl.unileoben.ac.at
+        - "*.jhub.dshl.unileoben.ac.at"
 
 # =============================================================================
 # PRE-PULLER - Reduce spawn time
