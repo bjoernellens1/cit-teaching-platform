@@ -250,12 +250,13 @@ hub:
           {
               "display_name": "GPU XSmall - PyTorch",
               "slug": "gpu-xsmall-pytorch",
-              "description": "8 CPU cores, 24 GB RAM, 5 GB VRAM (A100 MIG slice), PyTorch, 10 GB storage",
+              "description": "16 CPU cores, 48 GiB RAM, 5 GB VRAM (A100 MIG slice), PyTorch, 24 GB storage",
               "kubespawner_override": {
-                  "cpu_limit": 8,
-                  "cpu_guarantee": 2,
-                  "mem_limit": "24G",
-                  "mem_guarantee": "4G",
+                "cpu_limit": 16,
+                "cpu_guarantee": 4,
+                "mem_limit": "48G",
+                "mem_guarantee": "8G",
+                "storage_capacity": "24Gi",
                   "extra_resource_limits": {"nvidia.com/mig-1g.5gb": 1},
                   "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-pytorch-code"
               }
@@ -263,12 +264,13 @@ hub:
           {
               "display_name": "GPU XSmall - TensorFlow",
               "slug": "gpu-xsmall-tf",
-              "description": "8 CPU cores, 24 GB RAM, 5 GB VRAM (A100 MIG slice), TensorFlow, 10 GB storage",
+              "description": "16 CPU cores, 48 GiB RAM, 5 GB VRAM (A100 MIG slice), TensorFlow, 24 GB storage",
               "kubespawner_override": {
-                  "cpu_limit": 8,
-                  "cpu_guarantee": 2,
-                  "mem_limit": "24G",
-                  "mem_guarantee": "4G",
+                "cpu_limit": 16,
+                "cpu_guarantee": 4,
+                "mem_limit": "48G",
+                "mem_guarantee": "8G",
+                "storage_capacity": "24Gi",
                   "extra_resource_limits": {"nvidia.com/mig-1g.5gb": 1},
                   "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-tf-code"
               }
@@ -360,8 +362,8 @@ hub:
           Groups:
           - jhub-admins: See all profiles
           - jhub-powerusers: See all profiles
-          - jhub-students: See only cpu-small and gpu-small profiles
-          - Others: Default to student-level access (cpu-small, gpu-small)
+          - jhub-students: See only cpu-small and gpu-xsmall profiles
+          - Others: Default to student-level access (cpu-small, gpu-xsmall)
           """
           auth_state = await spawner.user.get_auth_state()
           groups = set((auth_state or {}).get("oauth_user", {}).get("groups", []))
@@ -370,7 +372,7 @@ hub:
           full_access_groups = {"jhub-admins", "jhub-powerusers"}
           
           # Define student-accessible profile slugs
-          student_profiles = {"cpu-small", "gpu-small-pytorch", "gpu-small-tf"}
+          student_profiles = {"cpu-small", "gpu-xsmall-pytorch", "gpu-xsmall-tf"}
           
           # Check if user has full access
           has_full_access = bool(groups & full_access_groups)
