@@ -456,6 +456,13 @@ singleuser:
     extraVolumeMounts:
       - name: temp-storage
         mountPath: /home/jovyan/temp
+
+  # Allow large browser uploads in the notebook UI.
+  extraFiles:
+    jupyter-server-config:
+      mountPath: /etc/jupyter/jupyter_server_config.py
+      stringData: |
+        c.ServerApp.max_body_size = 1073741824  # 1 GiB
   
   # Use lifecycle hooks instead of initContainers to create directories
   # postStart runs after container starts, when home volume is already mounted
@@ -511,6 +518,10 @@ cull:
 ingress:
   enabled: true
   ingressClassName: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "1g"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
   hosts:
     - jhub.dshl.unileoben.ac.at
   tls:
