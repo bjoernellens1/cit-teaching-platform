@@ -957,7 +957,7 @@ route:
 
 **Per-User Resource Usage**:
 - **CPU Small**: 2 cores, 6 GB RAM
-- **GPU Small**: 16 cores, 48 GB RAM, 1 MIG slice
+- **GPU Small**: 16 cores, 48 GB RAM, 10 GB VRAM via MPS sharing (see below)
 - **Storage**: 10 GB (grows 1-2 GB per semester)
 
 **Concurrent Users**:
@@ -968,7 +968,14 @@ route:
 **Resource Requirements for 200 Concurrent Users**:
 - **CPU**: 400 cores (with 2:1 overcommit = 200 physical)
 - **RAM**: 1.2 TB (with 1.2:1 overcommit = 1 TB physical)
-- **GPU**: 20 MIG slices (= 10 A100 GPUs with MIG 2×)
+- **GPU**: MIG partitioning is retired cluster-wide (A100 excludes NVIDIA
+  DRA's DynamicMIG feature, and MIG mode toggles require a disruptive
+  reboot on this passthrough hardware). GPU sharing is now done via NVIDIA
+  MPS + KAI Scheduler's `gpu-memory` annotation and reservation-pod
+  mechanism, on top of a plain (non-MIG) device-plugin mode that also
+  supports real multi-GPU-per-pod exclusive requests (GPU Large/XLarge
+  profiles). See cps-gpu-cluster's `docs/troubleshooting.md` for the full
+  incident history behind this architecture.
 
 ### Scaling Plan
 

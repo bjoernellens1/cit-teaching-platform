@@ -163,7 +163,7 @@ Different profiles provide different resources. Choose based on your workload:
 - **CPU**: 16 cores
 - **RAM**: 48 GB
 - **Storage**: 10 GB (your personal work directory)
-- **GPU**: 10 GB VRAM (NVIDIA A100 MIG slice)
+- **GPU**: 10 GB VRAM (shared A100, via NVIDIA MPS)
 - **Availability**: Course-dependent (ask your instructor)
 
 **Use Cases**:

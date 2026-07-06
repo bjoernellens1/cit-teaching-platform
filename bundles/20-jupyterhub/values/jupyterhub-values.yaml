@@ -209,6 +209,22 @@ hub:
     # Profile list hook for group-based profile filtering
     profile_list_hook: |
       # Store the original profile list before overwriting with the hook
+      # MPS pipe/log mounts required for any profile that sets a gpu-memory
+      # annotation (MPS-shared tier) -- without these, CUDA_MPS_PINNED_DEVICE_MEM_LIMIT
+      # is silently unenforced (confirmed live on the cit-cps-gpu cluster,
+      # 2026-07-06: a test pod without this wiring allocated 16x its
+      # configured limit with zero errors). Paths match the cluster's real
+      # MPS control daemon mounts (hostPath /run/nvidia/mps -> container /mps).
+      _mps_volumes = [
+          {"name": "mps-pipe", "hostPath": {"path": "/run/nvidia/mps/nvidia.com/gpu/pipe", "type": "DirectoryOrCreate"}},
+          {"name": "mps-log", "hostPath": {"path": "/run/nvidia/mps/nvidia.com/gpu/log", "type": "DirectoryOrCreate"}},
+      ]
+      _mps_volume_mounts = [
+          {"name": "mps-pipe", "mountPath": "/mps/nvidia.com/gpu/pipe"},
+          {"name": "mps-log", "mountPath": "/mps/nvidia.com/gpu/log"},
+      ]
+
+      # Store the original profile list before overwriting with the hook
       _original_profile_list = [
           {
               "display_name": "CPU Small",
@@ -220,7 +236,10 @@ hub:
                   "cpu_guarantee": 0.5,
                   "mem_limit": "6G",
                   "mem_guarantee": "1G",
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-standard-cpu"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-standard-cpu",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "courses"},
+                  "priority_class_name": "kai-course-high"
               }
           },
           {
@@ -232,7 +251,10 @@ hub:
                   "cpu_guarantee": 2,
                   "mem_limit": "24G",
                   "mem_guarantee": "4G",
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-standard-cpu"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-standard-cpu",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "phd-interactive"},
+                  "priority_class_name": "kai-phd-interactive"
               }
           },
           {
@@ -244,113 +266,168 @@ hub:
                   "cpu_guarantee": 8,
                   "mem_limit": "128G",
                   "mem_guarantee": "16G",
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-standard-cpu"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-standard-cpu",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "phd-interactive"},
+                  "priority_class_name": "kai-phd-interactive"
               }
           },
           {
               "display_name": "GPU XSmall - PyTorch",
               "slug": "gpu-xsmall-pytorch",
-              "description": "16 CPU cores, 48 GiB RAM, 5 GB VRAM (A100 MIG slice), PyTorch, 24 GB storage",
+              "description": "16 CPU cores, 48 GiB RAM, 5 GB VRAM via MPS sharing, PyTorch, 24 GB storage",
               "kubespawner_override": {
                 "cpu_limit": 16,
                 "cpu_guarantee": 4,
                 "mem_limit": "48G",
                 "mem_guarantee": "8G",
                 "storage_capacity": "24Gi",
-                  "extra_resource_limits": {"nvidia.com/mig-1g.5gb": 1},
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-pytorch-code"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-pytorch-code",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "courses"},
+                  "priority_class_name": "kai-course-high",
+                  "extra_annotations": {"gpu-memory": "5120"},
+                  "environment": {
+                      "CUDA_MPS_PINNED_DEVICE_MEM_LIMIT": "0=5120M",
+                      "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
+                      "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
+                  },
+                  "volumes": _mps_volumes,
+                  "volume_mounts": _mps_volume_mounts
               }
           },
           {
               "display_name": "GPU XSmall - TensorFlow",
               "slug": "gpu-xsmall-tf",
-              "description": "16 CPU cores, 48 GiB RAM, 5 GB VRAM (A100 MIG slice), TensorFlow, 24 GB storage",
+              "description": "16 CPU cores, 48 GiB RAM, 5 GB VRAM via MPS sharing, TensorFlow, 24 GB storage",
               "kubespawner_override": {
                 "cpu_limit": 16,
                 "cpu_guarantee": 4,
                 "mem_limit": "48G",
                 "mem_guarantee": "8G",
                 "storage_capacity": "24Gi",
-                  "extra_resource_limits": {"nvidia.com/mig-1g.5gb": 1},
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-tf-code"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-tf-code",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "courses"},
+                  "priority_class_name": "kai-course-high",
+                  "extra_annotations": {"gpu-memory": "5120"},
+                  "environment": {
+                      "CUDA_MPS_PINNED_DEVICE_MEM_LIMIT": "0=5120M",
+                      "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
+                      "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
+                  },
+                  "volumes": _mps_volumes,
+                  "volume_mounts": _mps_volume_mounts
               }
           },
           {
               "display_name": "GPU Small - PyTorch",
               "slug": "gpu-small-pytorch",
-              "description": "16 CPU cores, 48 GB RAM, 10 GB VRAM (A100 MIG slice), PyTorch, 10 GB storage",
+              "description": "16 CPU cores, 48 GB RAM, 10 GB VRAM via MPS sharing, PyTorch, 10 GB storage",
               "kubespawner_override": {
                   "cpu_limit": 16,
                   "cpu_guarantee": 4,
                   "mem_limit": "48G",
                   "mem_guarantee": "8G",
-                  "extra_resource_limits": {"nvidia.com/mig-1g.10gb": 1},
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-pytorch-code"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-pytorch-code",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "phd-interactive"},
+                  "priority_class_name": "kai-phd-interactive",
+                  "extra_annotations": {"gpu-memory": "10240"},
+                  "environment": {
+                      "CUDA_MPS_PINNED_DEVICE_MEM_LIMIT": "0=10240M",
+                      "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
+                      "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
+                  },
+                  "volumes": _mps_volumes,
+                  "volume_mounts": _mps_volume_mounts
               }
           },
           {
               "display_name": "GPU Small - TensorFlow",
               "slug": "gpu-small-tf",
-              "description": "16 CPU cores, 48 GB RAM, 10 GB VRAM (A100 MIG slice), TensorFlow, 10 GB storage",
+              "description": "16 CPU cores, 48 GB RAM, 10 GB VRAM via MPS sharing, TensorFlow, 10 GB storage",
               "kubespawner_override": {
                   "cpu_limit": 16,
                   "cpu_guarantee": 4,
                   "mem_limit": "48G",
                   "mem_guarantee": "8G",
-                  "extra_resource_limits": {"nvidia.com/mig-1g.10gb": 1},
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-tf-code"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-tf-code",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "phd-interactive"},
+                  "priority_class_name": "kai-phd-interactive",
+                  "extra_annotations": {"gpu-memory": "10240"},
+                  "environment": {
+                      "CUDA_MPS_PINNED_DEVICE_MEM_LIMIT": "0=10240M",
+                      "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
+                      "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
+                  },
+                  "volumes": _mps_volumes,
+                  "volume_mounts": _mps_volume_mounts
               }
           },
           {
               "display_name": "GPU Large - PyTorch",
               "slug": "gpu-large-pytorch",
-              "description": "24 CPU cores, 96 GB RAM, 1x full A100 GPU, PyTorch, 100 GB storage",
+              "description": "24 CPU cores, 96 GB RAM, 1x full A100 GPU (exclusive), PyTorch, 100 GB storage",
               "kubespawner_override": {
                   "cpu_limit": 24,
                   "cpu_guarantee": 6,
                   "mem_limit": "96G",
                   "mem_guarantee": "16G",
                   "extra_resource_limits": {"nvidia.com/gpu": 1},
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-pytorch-code"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-pytorch-code",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "phd-interactive"},
+                  "priority_class_name": "kai-phd-interactive"
               }
           },
           {
               "display_name": "GPU Large - TensorFlow",
               "slug": "gpu-large-tf",
-              "description": "24 CPU cores, 96 GB RAM, 1x full A100 GPU, TensorFlow, 100 GB storage",
+              "description": "24 CPU cores, 96 GB RAM, 1x full A100 GPU (exclusive), TensorFlow, 100 GB storage",
               "kubespawner_override": {
                   "cpu_limit": 24,
                   "cpu_guarantee": 6,
                   "mem_limit": "96G",
                   "mem_guarantee": "16G",
                   "extra_resource_limits": {"nvidia.com/gpu": 1},
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-tf-code"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-tf-code",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "phd-interactive"},
+                  "priority_class_name": "kai-phd-interactive"
               }
           },
           {
               "display_name": "GPU XLarge - PyTorch",
               "slug": "gpu-xlarge-pytorch",
-              "description": "48 CPU cores, 128 GB RAM, 2x full A100 GPUs, PyTorch, 100 GB storage",
+              "description": "48 CPU cores, 128 GB RAM, 2x full A100 GPUs (exclusive, NVLink/PCIe P2P), PyTorch, 100 GB storage",
               "kubespawner_override": {
                   "cpu_limit": 48,
                   "cpu_guarantee": 12,
                   "mem_limit": "128G",
                   "mem_guarantee": "24G",
                   "extra_resource_limits": {"nvidia.com/gpu": 2},
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-pytorch-code"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-pytorch-code",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "phd-interactive"},
+                  "priority_class_name": "kai-phd-interactive"
               }
           },
           {
               "display_name": "GPU XLarge - TensorFlow",
               "slug": "gpu-xlarge-tf",
-              "description": "48 CPU cores, 128 GB RAM, 2x full A100 GPUs, TensorFlow, 100 GB storage",
+              "description": "48 CPU cores, 128 GB RAM, 2x full A100 GPUs (exclusive, NVLink/PCIe P2P), TensorFlow, 100 GB storage",
               "kubespawner_override": {
                   "cpu_limit": 48,
                   "cpu_guarantee": 12,
                   "mem_limit": "128G",
                   "mem_guarantee": "24G",
                   "extra_resource_limits": {"nvidia.com/gpu": 2},
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-tf-code"
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-tf-code",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "phd-interactive"},
+                  "priority_class_name": "kai-phd-interactive"
               }
           },
       ]
@@ -485,10 +562,20 @@ singleuser:
 # =============================================================================
 
 scheduling:
-  # User scheduler for better pod placement
+  # Disabled 2026-07-06: this chart's built-in user-scheduler is a
+  # relabeled kube-scheduler for cloud-autoscaling bin-packing (see
+  # https://z2jh.jupyter.org/en/stable/administrator/optimization.html --
+  # "Only activate the user scheduler if you have an autoscaling node
+  # pool"). Running it alongside kai-scheduler (now set per-profile above
+  # via scheduler_name) caused a real incident on the sibling cps-gpu-cluster
+  # deployment: a user pod got scheduled by userScheduler instead of
+  # kai-scheduler and bypassed KAI's GPU reservation/priority accounting
+  # entirely, double-booking a physical GPU. Two independently-active
+  # schedulers with overlapping placement targets is a known unstable
+  # pattern (same class of bug as jupyterhub/zero-to-jupyterhub-k8s#1592).
   userScheduler:
-    enabled: true
-  
+    enabled: false
+
   # Pod priority for user pods
   userPods:
     nodeAffinity:
