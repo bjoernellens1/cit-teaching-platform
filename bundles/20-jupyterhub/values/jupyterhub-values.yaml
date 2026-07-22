@@ -230,7 +230,6 @@ hub:
               "display_name": "CPU Small",
               "slug": "cpu-small",
               "description": "2 CPU cores, 6 GB RAM, 10 GB storage",
-              "default": True,
               "kubespawner_override": {
                   "cpu_limit": 2,
                   "cpu_guarantee": 0.5,
@@ -275,7 +274,8 @@ hub:
           {
               "display_name": "GPU XSmall - PyTorch",
               "slug": "gpu-xsmall-pytorch",
-              "description": "16 CPU cores, 48 GiB RAM, 5 GB VRAM via MPS sharing, PyTorch, 24 GB storage",
+              "description": "16 CPU cores, 48 GiB RAM, 2 GB VRAM via MPS sharing, PyTorch, 24 GB storage",
+              "default": True,
               "kubespawner_override": {
                 "cpu_limit": 16,
                 "cpu_guarantee": 4,
@@ -286,9 +286,9 @@ hub:
                   "scheduler_name": "kai-scheduler",
                   "extra_labels": {"kai.scheduler/queue": "courses"},
                   "priority_class_name": "kai-course-high",
-                  "extra_annotations": {"gpu-memory": "5120"},
+                  "extra_annotations": {"gpu-memory": "2048"},
                   "environment": {
-                      "CUDA_MPS_PINNED_DEVICE_MEM_LIMIT": "0=5120M",
+                      "CUDA_MPS_PINNED_DEVICE_MEM_LIMIT": "0=2048M",
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
                   },
@@ -299,7 +299,7 @@ hub:
           {
               "display_name": "GPU XSmall - TensorFlow",
               "slug": "gpu-xsmall-tf",
-              "description": "16 CPU cores, 48 GiB RAM, 5 GB VRAM via MPS sharing, TensorFlow, 24 GB storage",
+              "description": "16 CPU cores, 48 GiB RAM, 2 GB VRAM via MPS sharing, TensorFlow, 24 GB storage",
               "kubespawner_override": {
                 "cpu_limit": 16,
                 "cpu_guarantee": 4,
@@ -310,9 +310,9 @@ hub:
                   "scheduler_name": "kai-scheduler",
                   "extra_labels": {"kai.scheduler/queue": "courses"},
                   "priority_class_name": "kai-course-high",
-                  "extra_annotations": {"gpu-memory": "5120"},
+                  "extra_annotations": {"gpu-memory": "2048"},
                   "environment": {
-                      "CUDA_MPS_PINNED_DEVICE_MEM_LIMIT": "0=5120M",
+                      "CUDA_MPS_PINNED_DEVICE_MEM_LIMIT": "0=2048M",
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
                   },
