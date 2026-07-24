@@ -25,21 +25,42 @@ hub:
   existingSecret: jupyterhub-secrets
   
   # ==========================================================================
-  # AUTHENTICATION - Authentik OIDC
+  # AUTHENTICATION - Dex OIDC broker (2026-07-24)
+  #
+  # Cut over from direct CIT Authentik OIDC to the shared Dex broker
+  # (dex.dshl.unileoben.ac.at, deployed in the cps-gpu-cluster repo's
+  # system/auth/dex bundle) so CPS and CIT Authentik users can both log in
+  # here via one issuer, matching the pattern already validated and merged
+  # for the cps-gpu-cluster repo's own JupyterHub instance. Dex's `cps`/
+  # `cit` connectors already have insecureEnableGroups: true set (required
+  # for GenericOAuthenticator's manage_groups/admin_groups to see any
+  # groups at all -- see cps-gpu-cluster docs/dex-idp-broker.md for the
+  # full incident writeup) and reuse the SAME preferred_username claim, so
+  # username_claim below is UNCHANGED and existing users' claim-<username>
+  # PVCs will be reused, not recreated.
+  #
+  # Rollback: restore the block below to:
+  #   authorize_url: https://auth.dshl.unileoben.ac.at/application/o/authorize/
+  #   token_url: https://auth.dshl.unileoben.ac.at/application/o/token/
+  #   userdata_url: https://auth.dshl.unileoben.ac.at/application/o/userinfo/
+  #   client_id: 2iyGeaF0ysvTadhCopxadMp99J65hfxiS79bniI6
+  #   login_service: Authentik
+  # and restore jupyterhub-oauth-secret's client-secret to the CIT
+  # Authentik "Provider for cit-jhub" (pk 2) client secret.
   # ==========================================================================
   config:
     JupyterHub:
       authenticator_class: generic-oauth
-    
+
     GenericOAuthenticator:
-      # Authentik OIDC endpoints
-      authorize_url: https://auth.dshl.unileoben.ac.at/application/o/authorize/
-      token_url: https://auth.dshl.unileoben.ac.at/application/o/token/
-      userdata_url: https://auth.dshl.unileoben.ac.at/application/o/userinfo/
-      
-      # OAuth2 client credentials (from Authentik)
-      client_id: 2iyGeaF0ysvTadhCopxadMp99J65hfxiS79bniI6
-      login_service: Authentik
+      # Dex broker endpoints (was direct CIT Authentik OIDC)
+      authorize_url: https://dex.dshl.unileoben.ac.at/auth
+      token_url: https://dex.dshl.unileoben.ac.at/token
+      userdata_url: https://dex.dshl.unileoben.ac.at/userinfo
+
+      # OAuth2 client credentials (Dex staticClient "cit-jupyterhub")
+      client_id: cit-jupyterhub
+      login_service: "Login (CPS or CIT via Dex)"
       # client_secret provided via extraEnv from secret
       
       # Scopes to request
