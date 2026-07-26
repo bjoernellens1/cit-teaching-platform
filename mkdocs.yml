@@ -1,0 +1,55 @@
+site_name: CIT Teaching Platform
+site_description: GitOps-managed Kubernetes deployment for the CIT teaching environment (JupyterHub + Authentik)
+repo_url: https://github.com/bjoernellens1/cit-teaching-platform
+repo_name: bjoernellens1/cit-teaching-platform
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Guides:
+      - User Guide: USER_GUIDE.md
+      - Admin Guide: ADMIN_GUIDE.md
+      - Developer Guide: DEVELOPER_GUIDE.md
+      - Infrastructure Guide: INFRASTRUCTURE.md
+  - Operations:
+      - Troubleshooting: TROUBLESHOOTING.md
+      - Security: SECURITY.md
+      - SOPS Bootstrap: BOOTSTRAP-SOPS.md
+  - Documentation Index: DOCUMENTATION_INDEX.md
