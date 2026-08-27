@@ -95,6 +95,12 @@ hub:
   # EXTRA CONFIGURATION - Pre-spawn hook for course folders
   # ==========================================================================
   extraConfig:
+    # Notebook images load several Jupyter extensions before accepting HTTP
+    # requests. The Spawner default is 30 seconds, which kills a healthy
+    # server during that initialization.
+    http_timeout: |
+      c.Spawner.http_timeout = 120
+
     # Pre-spawn hook to create user directories and configure storage
     pre_spawn_hook: |
       import os
