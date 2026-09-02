@@ -36,7 +36,8 @@ def test_xpra_proxy_config_is_mounted_in_the_jupyter_config_path():
     assert '"xpra": {' in text
     assert '"xpra", "desktop", ":100"' in text
     assert '"launcher_entry": {"title": "Desktop (Xpra)"}' in text
-    assert '"--xvfb=Xorg -noreset +extension GLX +extension RANDR +extension RENDER +extension Composite "' in text
+    assert '"--xvfb=env __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json "' in text
+    assert '"Xorg -noreset +extension GLX +extension RANDR +extension RENDER +extension Composite "' in text
     assert '"-config /etc/xpra/xorg.conf -nolisten tcp -dpi 96 -auth $XAUTHORITY"' in text
     assert '"--resize-display=auto"' in text
     assert '"--systemd-run=no"' in text

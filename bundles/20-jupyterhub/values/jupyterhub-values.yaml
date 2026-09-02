@@ -594,7 +594,8 @@ singleuser:
                 "--systemd-run=no", "--pulseaudio=no",
                 "--file-transfer=yes", "--file-size-limit=1G", "--open-files=no",
                 "--clipboard=yes", "--notifications=yes", "--system-tray=yes",
-                "--xvfb=Xorg -noreset +extension GLX +extension RANDR +extension RENDER +extension Composite "
+                "--xvfb=env __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json "
+                "Xorg -noreset +extension GLX +extension RANDR +extension RENDER +extension Composite "
                 "-config /etc/xpra/xorg.conf -nolisten tcp -dpi 96 -auth $XAUTHORITY",
                 "--resize-display=auto",
                 "--dpi=96",
