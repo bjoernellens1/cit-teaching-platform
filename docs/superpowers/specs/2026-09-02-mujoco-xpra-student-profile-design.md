@@ -104,11 +104,14 @@ result are recorded.
 
 The standard student session duration is two hours. The MuJoCo launch form has
 a required duration dropdown with 2, 4, 8, and 24 hour choices; 24 hours is
-the absolute maximum. The existing one-hour idle cull stays in effect.
+the absolute maximum. The 2 and 4 hour choices are interactive sessions. The
+8 and 24 hour choices are labelled training sessions and remain alive while a
+user is disconnected or their training process emits no notebook activity.
 
-The global culler maximum age is raised to 24 hours only so it does not
-preempt the approved extended session. The selected duration is enforced per
-pod with `active_deadline_seconds`: 7200, 14400, 28800, or 86400.
+The global idle-cull threshold is raised to 24 hours so it does not preempt a
+legitimate detached training process. The selected duration is enforced per
+pod with `active_deadline_seconds`: 7200, 14400, 28800, or 86400. This hard
+deadline is the safety bound for all MuJoCo sessions, including training.
 
 ## Image size and supply-chain constraints
 

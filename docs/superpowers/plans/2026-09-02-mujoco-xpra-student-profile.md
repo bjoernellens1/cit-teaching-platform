@@ -216,8 +216,9 @@ assert expected_mib == {1: 1024, 2: 2048, 3: 3072, 4: 4096, 5: 5120,
 The test must additionally require the MPS annotation, CUDA MPS limit, both
 MPS mounts, `kai-scheduler`, course queue, and course priority class for each
 choice. It must require `{2: 7200, 4: 14400, 8: 28800, 24: 86400}`, default
-to 2 hours, and assert `cull.maxAge: 86400` while idle `cull.timeout` stays
-3600.
+to 2 hours, and assert both `cull.maxAge` and `cull.timeout` are 86400 so a
+disconnected training run is bounded by its selected pod deadline rather than
+browser activity.
 
 - [ ] **Step 2: Run the test and verify red**
 
@@ -233,7 +234,8 @@ single MuJoCo profile to `_original_profile_list`. Use KubeSpawner
 choice overrides the full MPS contract atomically. Add `gpu-mujoco-xpra` to
 `student_profiles`; do not add any other GPU profile there. Add a session
 duration dropdown that sets `active_deadline_seconds` to 7200, 14400, 28800,
-or 86400; set `cull.maxAge: 86400` and retain `cull.timeout: 3600`.
+or 86400; set both `cull.maxAge` and `cull.timeout` to 86400. Label the 8 and
+24 hour options as training sessions.
 
 - [ ] **Step 4: Verify green and render the chart**
 
