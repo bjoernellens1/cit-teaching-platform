@@ -251,6 +251,32 @@ hub:
           {"name": "mps-log", "mountPath": "/mps/nvidia.com/gpu/log"},
       ]
 
+      _mujoco_gpu_memory_choices = {
+          str(gib): {
+              "display_name": f"{gib} GiB",
+              "default": gib == 1,
+              "kubespawner_override": {
+                  "extra_annotations": {"gpu-memory": str(gib * 1024)},
+                  "environment": {
+                      "CUDA_MPS_PINNED_DEVICE_MEM_LIMIT": f"0={gib * 1024}M",
+                      "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
+                      "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log",
+                  },
+                  "volumes": _mps_volumes,
+                  "volume_mounts": _mps_volume_mounts,
+              },
+          }
+          for gib in range(1, 21)
+      }
+      _mujoco_session_duration_choices = {
+          str(hours): {
+              "display_name": f"{hours} hours" + (" (training)" if hours >= 8 else ""),
+              "default": hours == 2,
+              "kubespawner_override": {"active_deadline_seconds": hours * 3600},
+          }
+          for hours in (2, 4, 8, 24)
+      }
+
       # Store the original profile list before overwriting with the hook
       _original_profile_list = [
           {
@@ -457,6 +483,32 @@ hub:
                   "priority_class_name": "kai-phd-interactive"
               }
           },
+          {
+              "display_name": "MuJoCo Desktop - Xpra",
+              "slug": "gpu-mujoco-xpra",
+              "description": "MuJoCo + PyTorch, EGL rendering, Xpra desktop; choose 1-20 GiB VRAM and a 2-24 hour session",
+              "kubespawner_override": {
+                  "cpu_limit": 8,
+                  "cpu_guarantee": 2,
+                  "mem_limit": "24G",
+                  "mem_guarantee": "4G",
+                  "storage_capacity": "24Gi",
+                  "image": "ghcr.io/mul-cps/cps-jupyter-notebook:feat-mujoco-xpra-image-mujoco-xpra",
+                  "scheduler_name": "kai-scheduler",
+                  "extra_labels": {"kai.scheduler/queue": "courses"},
+                  "priority_class_name": "kai-course-high",
+              },
+              "profile_options": {
+                  "gpu_memory_gib": {
+                      "display_name": "GPU memory",
+                      "choices": _mujoco_gpu_memory_choices,
+                  },
+                  "session_duration_hours": {
+                      "display_name": "Maximum session duration",
+                      "choices": _mujoco_session_duration_choices,
+                  },
+              },
+          },
       ]
       
       async def profile_list_hook(spawner):
@@ -476,7 +528,7 @@ hub:
           full_access_groups = {"jhub-admins", "jhub-powerusers"}
           
           # Define student-accessible profile slugs
-          student_profiles = {"cpu-small", "gpu-xsmall-pytorch", "gpu-xsmall-tf"}
+          student_profiles = {"cpu-small", "gpu-xsmall-pytorch", "gpu-xsmall-tf", "gpu-mujoco-xpra"}
           
           # Check if user has full access
           has_full_access = bool(groups & full_access_groups)
@@ -567,6 +619,16 @@ singleuser:
       mountPath: /etc/jupyter/jupyter_server_config.py
       stringData: |
         c.ServerApp.max_body_size = 1073741824  # 1 GiB
+        c.ServerProxy.servers = {
+          "xpra": {
+            "command": [
+              "xpra", "start", ":100", "--bind-tcp=127.0.0.1:{port}",
+              "--html=on", "--daemon=no", "--start=/usr/local/bin/start-xpra-desktop.sh",
+            ],
+            "timeout": 60,
+            "launcher_entry": {"title": "Desktop (Xpra)"},
+          },
+        }
   
   # Use lifecycle hooks instead of initContainers to create directories
   # postStart runs after container starts, when home volume is already mounted
@@ -614,16 +676,18 @@ scheduling:
 
 cull:
   enabled: true
-  # Cull after 1 hour of inactivity (aggressive for teaching)
-  timeout: 3600
+  # Detached MuJoCo training is bounded by its selected pod deadline.
+  # Keep it alive when the browser/kernel reports no activity.
+  # Cull after 24 hours of inactivity.
+  timeout: 86400
   # Check every 5 minutes
   every: 300
   # Keep user accounts when their servers are culled (only servers are removed)
   users: false
   # Remove named servers after cull
   removeNamedServers: true
-  # Max age of a server before culling (8 hours - lecture day)
-  maxAge: 28800
+  # Per-profile activeDeadlineSeconds enforces the 2-24 hour session limit.
+  maxAge: 86400
 
 # =============================================================================
 # INGRESS
