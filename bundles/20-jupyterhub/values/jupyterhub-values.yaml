@@ -129,10 +129,21 @@ hub:
           # Always create work directory (temp is created automatically by emptyDir mount)
           init_dirs = ["/home/jovyan/work"]
 
-          # Initialize volumes and mounts lists for conditional mounts only
-          # (temp volume is defined statically in values.yaml)
+          # Conditional mounts are appended to chart-managed storage below.
           volumes = []
           volume_mounts = []
+
+          def append_volume_mount(volume_spec, mount_spec):
+              """Append without replacing Z2JH's home and extraFiles mounts."""
+              if isinstance(spawner.volumes, dict):
+                  spawner.volumes[volume_spec["name"]] = volume_spec
+              else:
+                  spawner.volumes = list(spawner.volumes or []) + [volume_spec]
+
+              if isinstance(spawner.volume_mounts, dict):
+                  spawner.volume_mounts[mount_spec["name"]] = mount_spec
+              else:
+                  spawner.volume_mounts = list(spawner.volume_mounts or []) + [mount_spec]
 
           # Only mount shared storage for privileged users (not students)
           if is_privileged:
@@ -178,58 +189,24 @@ hub:
           # Set environment for postStart hook
           spawner.environment["INIT_DIRS"] = " ".join(init_dirs)
 
-          # Always restore chart-managed storage after profile overrides.
-          # GPU/MPS profile options set their own volumes and mounts; without
-          # this reconciliation they replace the dynamic per-user home PVC.
-          # Add conditional volumes (shared, courses) only after preserving
-          # the persistent home and ephemeral temp mounts.
-          # Get raw current values
-          raw_volumes = list(getattr(spawner, 'volumes', []) or [])
-          raw_mounts = list(getattr(spawner, 'volume_mounts', []) or [])
+          # Profile overrides merge environment/annotations but must never
+          # replace volumes. Add MPS client mounts after those overrides so
+          # Z2JH's dynamic home PVC and extraFiles (Xpra config) remain intact.
+          annotations = getattr(spawner, "extra_annotations", {}) or {}
+          if "gpu-memory" in annotations:
+              append_volume_mount(
+                  {"name": "mps-pipe", "hostPath": {"path": "/run/nvidia/mps/nvidia.com/gpu/pipe", "type": "DirectoryOrCreate"}},
+                  {"name": "mps-pipe", "mountPath": "/mps/nvidia.com/gpu/pipe"},
+              )
+              append_volume_mount(
+                  {"name": "mps-log", "hostPath": {"path": "/run/nvidia/mps/nvidia.com/gpu/log", "type": "DirectoryOrCreate"}},
+                  {"name": "mps-log", "mountPath": "/mps/nvidia.com/gpu/log"},
+              )
 
-          # Sanitize: retain only valid dicts, discard strings/others that cause crashes
-          current_volumes = [v for v in raw_volumes if isinstance(v, dict)]
-          current_mounts = [m for m in raw_mounts if isinstance(m, dict)]
+          for volume_spec, mount_spec in zip(volumes, volume_mounts):
+              append_volume_mount(volume_spec, mount_spec)
 
-          # Ensure temp-storage is present (fixing issue where it appears as string)
-          if not any(v.get('name') == 'temp-storage' for v in current_volumes):
-              current_volumes.append({
-                  "name": "temp-storage",
-                  "emptyDir": {"sizeLimit": "10Gi"}
-              })
-
-          if not any(m.get('name') == 'temp-storage' for m in current_mounts):
-              current_mounts.append({
-                  "name": "temp-storage",
-                  "mountPath": "/home/jovyan/temp"
-              })
-
-          # Ensure home volume is present (fixing issue where it appears as string 'volume-{user_server}')
-          # This ensures persistence for /home/jovyan
-          home_mount_path = "/home/jovyan"
-          if not any(m.get('mountPath') == home_mount_path for m in current_mounts):
-              # Define home volume name and claim name
-              # Using typical Z2JH naming convention
-              vol_name = f"volume-{spawner.user.name}"
-              claim_name = f"claim-{spawner.user.name}"
-
-              current_volumes.append({
-                  "name": vol_name,
-                  "persistentVolumeClaim": {
-                      "claimName": claim_name
-                  }
-              })
-              current_mounts.append({
-                  "name": vol_name,
-                  "mountPath": home_mount_path
-              })
-              spawner.log.info(f"Reinstated home volume: {vol_name} -> {claim_name}")
-
-          # Append new volumes and reassign
-          spawner.volumes = current_volumes + volumes
-          spawner.volume_mounts = current_mounts + volume_mounts
-
-          spawner.log.info(f"Reconciled base storage and added conditional volumes: {[v.get('name') for v in volumes]}")
+          spawner.log.info(f"Preserved base storage and added conditional volumes: {[v.get('name') for v in volumes]}")
 
           # Log for debugging
           spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}, privileged: {is_privileged}")
@@ -239,21 +216,6 @@ hub:
     # Profile list hook for group-based profile filtering
     profile_list_hook: |
       # Store the original profile list before overwriting with the hook
-      # MPS pipe/log mounts required for any profile that sets a gpu-memory
-      # annotation (MPS-shared tier) -- without these, CUDA_MPS_PINNED_DEVICE_MEM_LIMIT
-      # is silently unenforced (confirmed live on the cit-cps-gpu cluster,
-      # 2026-07-06: a test pod without this wiring allocated 16x its
-      # configured limit with zero errors). Paths match the cluster's real
-      # MPS control daemon mounts (hostPath /run/nvidia/mps -> container /mps).
-      _mps_volumes = [
-          {"name": "mps-pipe", "hostPath": {"path": "/run/nvidia/mps/nvidia.com/gpu/pipe", "type": "DirectoryOrCreate"}},
-          {"name": "mps-log", "hostPath": {"path": "/run/nvidia/mps/nvidia.com/gpu/log", "type": "DirectoryOrCreate"}},
-      ]
-      _mps_volume_mounts = [
-          {"name": "mps-pipe", "mountPath": "/mps/nvidia.com/gpu/pipe"},
-          {"name": "mps-log", "mountPath": "/mps/nvidia.com/gpu/log"},
-      ]
-
       _mujoco_gpu_memory_choices = {
           str(gib): {
               "display_name": f"{gib} GiB",
@@ -265,8 +227,6 @@ hub:
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log",
                   },
-                  "volumes": _mps_volumes,
-                  "volume_mounts": _mps_volume_mounts,
               },
           }
           for gib in range(1, 21)
@@ -348,8 +308,6 @@ hub:
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
                   },
-                  "volumes": _mps_volumes,
-                  "volume_mounts": _mps_volume_mounts
               }
           },
           {
@@ -372,8 +330,6 @@ hub:
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
                   },
-                  "volumes": _mps_volumes,
-                  "volume_mounts": _mps_volume_mounts
               }
           },
           {
@@ -395,8 +351,6 @@ hub:
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
                   },
-                  "volumes": _mps_volumes,
-                  "volume_mounts": _mps_volume_mounts
               }
           },
           {
@@ -418,8 +372,6 @@ hub:
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
                   },
-                  "volumes": _mps_volumes,
-                  "volume_mounts": _mps_volume_mounts
               }
           },
           {

@@ -37,13 +37,16 @@ def test_xpra_proxy_config_is_mounted_in_the_jupyter_config_path():
     assert '"launcher_entry": {"title": "Desktop (Xpra)"}' in text
 
 
-def test_pre_spawn_hook_always_restores_the_persistent_home_mount():
+def test_pre_spawn_hook_appends_mps_mounts_without_replacing_base_storage():
     text = VALUES.read_text()
 
-    assert "# Always restore chart-managed storage after profile overrides." in text
-    assert 'claim_name = f"claim-{spawner.user.name}"' in text
-    assert '"mountPath": home_mount_path' in text
-    assert "# Add conditional volumes (shared, courses) only after preserving" in text
+    assert 'def append_volume_mount(volume_spec, mount_spec):' in text
+    assert 'if isinstance(spawner.volumes, dict):' in text
+    assert 'if "gpu-memory" in annotations:' in text
+    assert '"name": "mps-pipe"' in text
+    assert '"name": "mps-log"' in text
+    assert '"volumes": _mps_volumes' not in text
+    assert '"volume_mounts": _mps_volume_mounts' not in text
 
 
 def test_jupyterhub_chart_is_on_the_current_supported_patch_line():
