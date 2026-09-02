@@ -455,7 +455,7 @@ hub:
                   "mem_limit": "24G",
                   "mem_guarantee": "4G",
                   "storage_capacity": "24Gi",
-                  "image": "harbor.dshl.unileoben.ac.at/cps-users/cps-jupyter-notebook@sha256:bc265969dd1e080a9d59a3176945c4e6ba83b8618861d97ee71a361f0eae7143",
+                  "image": "harbor.dshl.unileoben.ac.at/cps-users/cps-jupyter-notebook@sha256:1932d8c96b8f798f0d5324584ab949de08b49ba2ef996bbdd8f27c1f87daac4b",
                   "scheduler_name": "kai-scheduler",
                   "extra_labels": {"kai.scheduler/queue": "courses"},
                   "priority_class_name": "kai-course-high",
