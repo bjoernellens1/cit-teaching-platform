@@ -588,6 +588,8 @@ singleuser:
   image:
     name: ghcr.io/mul-cps/cit-jupyter-notebook
     tag: "latest-standard-cpu"
+    pullSecrets:
+      - name: harbor-cps-users-pull
   
   # Resource limits per user
   cpu:
