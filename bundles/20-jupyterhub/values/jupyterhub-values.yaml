@@ -583,12 +583,24 @@ singleuser:
       mountPath: /usr/local/etc/jupyter/jupyter_server_config.py
       stringData: |
         c.ServerApp.max_body_size = 1073741824  # 1 GiB
+
+        # Xpra's bundled Xvfb crashes with the NVIDIA EGL stack. This system
+        # Xvfb command is the known-good CPS GPU cluster configuration.
+        def _xpra_command(port):
+            return [
+                "xpra", "start", ":100", f"--bind-tcp=127.0.0.1:{port}",
+                "--html=on", "--daemon=no", "--exit-with-children=yes",
+                "--start-child=/usr/local/bin/start-xpra-desktop.sh",
+                "--systemd-run=no", "--pulseaudio=no",
+                "--xvfb=Xvfb -screen 0 1680x1050x24 -extension GLX "
+                "+extension RANDR +extension RENDER +extension Composite "
+                "-nolisten tcp -noreset -dpi 96 -auth $XAUTHORITY",
+                "--dpi=96",
+            ]
+
         c.ServerProxy.servers = {
           "xpra": {
-            "command": [
-              "xpra", "start", ":100", "--bind-tcp=127.0.0.1:{port}",
-              "--html=on", "--daemon=no", "--start=/usr/local/bin/start-xpra-desktop.sh",
-            ],
+            "command": _xpra_command,
             "timeout": 60,
             "launcher_entry": {"title": "Desktop (Xpra)"},
           },
