@@ -37,6 +37,10 @@ def test_xpra_proxy_config_is_mounted_in_the_jupyter_config_path():
     assert '"launcher_entry": {"title": "Desktop (Xpra)"}' in text
     assert '"--xvfb=Xvfb -screen 0 1680x1050x24 -extension GLX "' in text
     assert '"--systemd-run=no"' in text
+    assert '"--file-transfer=yes"' in text
+    assert '"--file-size-limit=1G"' in text
+    assert '"--open-files=no"' in text
+    assert '"--clipboard=yes"' in text
 
 
 def test_mps_profile_overrides_merge_with_chart_managed_storage():

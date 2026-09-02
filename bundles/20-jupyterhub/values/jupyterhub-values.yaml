@@ -592,6 +592,8 @@ singleuser:
                 "--html=on", "--daemon=no", "--exit-with-children=yes",
                 "--start-child=/usr/local/bin/start-xpra-desktop.sh",
                 "--systemd-run=no", "--pulseaudio=no",
+                "--file-transfer=yes", "--file-size-limit=1G", "--open-files=no",
+                "--clipboard=yes", "--notifications=yes", "--system-tray=yes",
                 "--xvfb=Xvfb -screen 0 1680x1050x24 -extension GLX "
                 "+extension RANDR +extension RENDER +extension Composite "
                 "-nolisten tcp -noreset -dpi 96 -auth $XAUTHORITY",
