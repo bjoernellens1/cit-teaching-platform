@@ -15,6 +15,6 @@ targets:
 
 resources:
   - path: jupyterhub-sopssecret.yaml
+  - path: harbor-pull-sopssecret.yaml
   - path: shared-pvc.yaml
-
 
