@@ -15,15 +15,15 @@ hub:
     limits:
       cpu: 1000m
       memory: 1Gi
-  
+
   # Database configuration - PostgreSQL for 300 users
   # Password provided via PGPASSWORD environment variable in extraEnv
   db:
     type: postgres
     url: "postgresql+psycopg2://jupyterhub@jupyterhub-postgresql:5432/jupyterhub"
-  
+
   existingSecret: jupyterhub-secrets
-  
+
   # ==========================================================================
   # AUTHENTICATION - Dex OIDC broker (2026-07-24)
   #
@@ -62,35 +62,35 @@ hub:
       client_id: cit-jupyterhub
       login_service: "Login (CPS or CIT via Dex)"
       # client_secret provided via extraEnv from secret
-      
+
       # Scopes to request
       scope:
         - openid
         - profile
         - email
         - groups
-      
+
       # User info mapping
       username_claim: preferred_username
-      
+
       # Enable auth_state to access groups in spawner
       enable_auth_state: true
-      
+
       # Enable group management to use admin_groups
       manage_groups: true
       # Admin group mapping
       admin_groups:
         - jhub-admins
-      
+
       # Allow all authenticated users
       allow_all: true
-    
+
     Authenticator:
       # Enable auth_state for group-based configuration
       enable_auth_state: true
       # Auto-login (skip JupyterHub login button)
       auto_login: true
-  
+
   # ==========================================================================
   # EXTRA CONFIGURATION - Pre-spawn hook for course folders
   # ==========================================================================
@@ -104,36 +104,36 @@ hub:
     # Pre-spawn hook to create user directories and configure storage
     pre_spawn_hook: |
       import os
-      
+
       async def pre_spawn_hook(spawner):
           """
           Pre-spawn hook to configure user environment based on group membership.
-          
+
           Storage layout:
           - /home/jovyan (persistent, per-user Longhorn volume)
           - /home/jovyan/temp (ephemeral, fast emptyDir - cleared on pod restart)
           - /home/jovyan/shared (persistent, Longhorn RWX - only for admins/powerusers)
           - /home/jovyan/courses/<course_id> (persistent, per-course Longhorn RWX)
-          
+
           Groups:
           - jhub-students: No shared storage, only home + temp + course folders
           - jhub-admins/jhub-powerusers: Full access including global shared folder
           """
           auth_state = await spawner.user.get_auth_state()
           groups = set((auth_state or {}).get("oauth_user", {}).get("groups", []))
-          
+
           # Groups that get access to shared storage
           privileged_groups = {"jhub-admins", "jhub-powerusers"}
           is_privileged = bool(groups & privileged_groups)
-          
+
           # Always create work directory (temp is created automatically by emptyDir mount)
           init_dirs = ["/home/jovyan/work"]
-          
+
           # Initialize volumes and mounts lists for conditional mounts only
           # (temp volume is defined statically in values.yaml)
           volumes = []
           volume_mounts = []
-          
+
           # Only mount shared storage for privileged users (not students)
           if is_privileged:
               init_dirs.append("/home/jovyan/shared")
@@ -151,17 +151,17 @@ hub:
               spawner.log.info(f"User {spawner.user.name} is privileged, mounting shared storage")
           else:
               spawner.log.info(f"User {spawner.user.name} is student, no shared storage")
-          
+
           # Identify course groups and prepare mounts
           course_ids = []
           for g in groups:
               if g.startswith("course-"):
                   course_id = g.replace("course-", "")
                   course_ids.append(course_id)
-                  
+
                   # Add user-local course directory
                   init_dirs.append(f"/home/jovyan/courses/{course_id}")
-                  
+
                   # Mount shared course volume (if exists)
                   volumes.append({
                       "name": f"course-{course_id}-shared",
@@ -174,65 +174,68 @@ hub:
                       "mountPath": f"/srv/courses/{course_id}",
                       "readOnly": False
                   })
-          
+
           # Set environment for postStart hook
           spawner.environment["INIT_DIRS"] = " ".join(init_dirs)
-          
-          # Add conditional volumes (shared, courses) by appending to spawner lists
-          if volumes:
-              # Get raw current values
-              raw_volumes = list(getattr(spawner, 'volumes', []) or [])
-              raw_mounts = list(getattr(spawner, 'volume_mounts', []) or [])
-              
-              # Sanitize: retain only valid dicts, discard strings/others that cause crashes
-              current_volumes = [v for v in raw_volumes if isinstance(v, dict)]
-              current_mounts = [m for m in raw_mounts if isinstance(m, dict)]
-              
-              # Ensure temp-storage is present (fixing issue where it appears as string)
-              if not any(v.get('name') == 'temp-storage' for v in current_volumes):
-                  current_volumes.append({
-                      "name": "temp-storage",
-                      "emptyDir": {"sizeLimit": "10Gi"}
-                  })
-              
-              if not any(m.get('name') == 'temp-storage' for m in current_mounts):
-                  current_mounts.append({
-                      "name": "temp-storage",
-                      "mountPath": "/home/jovyan/temp"
-                  })
 
-              # Ensure home volume is present (fixing issue where it appears as string 'volume-{user_server}')
-              # This ensures persistence for /home/jovyan
-              home_mount_path = "/home/jovyan"
-              if not any(m.get('mountPath') == home_mount_path for m in current_mounts):
-                  # Define home volume name and claim name
-                  # Using typical Z2JH naming convention
-                  vol_name = f"volume-{spawner.user.name}"
-                  claim_name = f"claim-{spawner.user.name}"
-                  
-                  current_volumes.append({
-                      "name": vol_name,
-                      "persistentVolumeClaim": {
-                          "claimName": claim_name
-                      }
-                  })
-                  current_mounts.append({
-                      "name": vol_name,
-                      "mountPath": home_mount_path
-                  })
-                  spawner.log.info(f"Reinstated home volume: {vol_name} -> {claim_name}")
+          # Always restore chart-managed storage after profile overrides.
+          # GPU/MPS profile options set their own volumes and mounts; without
+          # this reconciliation they replace the dynamic per-user home PVC.
+          # Add conditional volumes (shared, courses) only after preserving
+          # the persistent home and ephemeral temp mounts.
+          # Get raw current values
+          raw_volumes = list(getattr(spawner, 'volumes', []) or [])
+          raw_mounts = list(getattr(spawner, 'volume_mounts', []) or [])
 
-              # Append new volumes and reassign
-              spawner.volumes = current_volumes + volumes
-              spawner.volume_mounts = current_mounts + volume_mounts
-              
-              spawner.log.info(f"Sanitized volumes and added privileged storage: {[v.get('name') for v in volumes]}")
-          
+          # Sanitize: retain only valid dicts, discard strings/others that cause crashes
+          current_volumes = [v for v in raw_volumes if isinstance(v, dict)]
+          current_mounts = [m for m in raw_mounts if isinstance(m, dict)]
+
+          # Ensure temp-storage is present (fixing issue where it appears as string)
+          if not any(v.get('name') == 'temp-storage' for v in current_volumes):
+              current_volumes.append({
+                  "name": "temp-storage",
+                  "emptyDir": {"sizeLimit": "10Gi"}
+              })
+
+          if not any(m.get('name') == 'temp-storage' for m in current_mounts):
+              current_mounts.append({
+                  "name": "temp-storage",
+                  "mountPath": "/home/jovyan/temp"
+              })
+
+          # Ensure home volume is present (fixing issue where it appears as string 'volume-{user_server}')
+          # This ensures persistence for /home/jovyan
+          home_mount_path = "/home/jovyan"
+          if not any(m.get('mountPath') == home_mount_path for m in current_mounts):
+              # Define home volume name and claim name
+              # Using typical Z2JH naming convention
+              vol_name = f"volume-{spawner.user.name}"
+              claim_name = f"claim-{spawner.user.name}"
+
+              current_volumes.append({
+                  "name": vol_name,
+                  "persistentVolumeClaim": {
+                      "claimName": claim_name
+                  }
+              })
+              current_mounts.append({
+                  "name": vol_name,
+                  "mountPath": home_mount_path
+              })
+              spawner.log.info(f"Reinstated home volume: {vol_name} -> {claim_name}")
+
+          # Append new volumes and reassign
+          spawner.volumes = current_volumes + volumes
+          spawner.volume_mounts = current_mounts + volume_mounts
+
+          spawner.log.info(f"Reconciled base storage and added conditional volumes: {[v.get('name') for v in volumes]}")
+
           # Log for debugging
           spawner.log.info(f"User {spawner.user.name} groups: {groups}, courses: {course_ids}, privileged: {is_privileged}")
-      
+
       c.KubeSpawner.pre_spawn_hook = pre_spawn_hook
-    
+
     # Profile list hook for group-based profile filtering
     profile_list_hook: |
       # Store the original profile list before overwriting with the hook
@@ -510,11 +513,11 @@ hub:
               },
           },
       ]
-      
+
       async def profile_list_hook(spawner):
           """
           Filter available profiles based on user group membership.
-          
+
           Groups:
           - jhub-admins: See all profiles
           - jhub-powerusers: See all profiles
@@ -523,16 +526,16 @@ hub:
           """
           auth_state = await spawner.user.get_auth_state()
           groups = set((auth_state or {}).get("oauth_user", {}).get("groups", []))
-          
+
           # Define full access groups
           full_access_groups = {"jhub-admins", "jhub-powerusers"}
-          
+
           # Define student-accessible profile slugs
           student_profiles = {"cpu-small", "gpu-xsmall-pytorch", "gpu-xsmall-tf", "gpu-mujoco-xpra"}
-          
+
           # Check if user has full access
           has_full_access = bool(groups & full_access_groups)
-          
+
           if has_full_access:
               # Admins and powerusers see all profiles
               spawner.log.info(f"User {spawner.user.name} has full profile access (groups: {groups})")
@@ -545,9 +548,9 @@ hub:
               ]
               spawner.log.info(f"User {spawner.user.name} has limited profile access (groups: {groups}), showing: {[p.get('slug') for p in filtered_profiles]}")
               return filtered_profiles
-      
+
       c.KubeSpawner.profile_list = profile_list_hook
-  
+
   # Environment variables from secrets
   extraEnv:
     # PostgreSQL password for hub database
@@ -569,7 +572,7 @@ hub:
 proxy:
   service:
     type: ClusterIP
-  
+
   chp:
     resources:
       requests:
@@ -590,7 +593,7 @@ singleuser:
     tag: "latest-standard-cpu"
     pullSecrets:
       - name: harbor-cps-users-pull
-  
+
   # Resource limits per user
   cpu:
     limit: 2
@@ -598,7 +601,7 @@ singleuser:
   memory:
     limit: 4G
     guarantee: 1G
-  
+
   # Storage - per-user home directory
   storage:
     type: dynamic
@@ -631,7 +634,7 @@ singleuser:
             "launcher_entry": {"title": "Desktop (Xpra)"},
           },
         }
-  
+
   # Use lifecycle hooks instead of initContainers to create directories
   # postStart runs after container starts, when home volume is already mounted
   lifecycleHooks:

@@ -34,3 +34,12 @@ def test_xpra_proxy_config_is_mounted_in_the_jupyter_config_path():
     assert "mountPath: /usr/local/etc/jupyter/jupyter_server_config.py" in text
     assert '"xpra": {' in text
     assert '"launcher_entry": {"title": "Desktop (Xpra)"}' in text
+
+
+def test_pre_spawn_hook_always_restores_the_persistent_home_mount():
+    text = VALUES.read_text()
+
+    assert "# Always restore chart-managed storage after profile overrides." in text
+    assert 'claim_name = f"claim-{spawner.user.name}"' in text
+    assert '"mountPath": home_mount_path' in text
+    assert "# Add conditional volumes (shared, courses) only after preserving" in text
