@@ -15,6 +15,7 @@
 - Pin the upstream base to `quay.io/jupyter/pytorch-notebook:x86_64-cuda12-2026-02-09@sha256:257b2d2f821824b7b4c96a8b54a625a5427bc86b4563ec9d5c24f795bdd0a3eb`.
 - The MuJoCo profile is student-visible; its image must not grant `jovyan` sudo.
 - Every 1–20 GiB choice must set annotation, MPS limit, pipe/log mounts, and KAI routing together.
+- Student sessions default to 2 hours; dropdown choices are 2, 4, 8, and 24 hours only.
 - Build through the in-cluster BuildKit/image-builder path; push only a validated image and record its immutable digest before changing Fleet production configuration.
 - Do not alter existing profile visibility or the legacy TurboVNC desktop.
 
@@ -195,6 +196,7 @@ Push the verified branch and retain the immutable digest for Task 3.
 **Interfaces:**
 - Produces student-visible profile `gpu-mujoco-xpra`.
 - Its `profile_options.gpu_memory_gib` has keys `1` through `20` and uses the validated immutable image digest from Task 2.
+- Its `profile_options.session_duration_hours` has choices 2, 4, 8, and 24 mapped to `active_deadline_seconds`.
 
 - [ ] **Step 1: Write the failing configuration test**
 
@@ -213,7 +215,9 @@ assert expected_mib == {1: 1024, 2: 2048, 3: 3072, 4: 4096, 5: 5120,
 
 The test must additionally require the MPS annotation, CUDA MPS limit, both
 MPS mounts, `kai-scheduler`, course queue, and course priority class for each
-choice.
+choice. It must require `{2: 7200, 4: 14400, 8: 28800, 24: 86400}`, default
+to 2 hours, and assert `cull.maxAge: 86400` while idle `cull.timeout` stays
+3600.
 
 - [ ] **Step 2: Run the test and verify red**
 
@@ -227,7 +231,9 @@ Add the Xpra `ServerProxy.servers` entry to `singleuser.extraFiles` and add the
 single MuJoCo profile to `_original_profile_list`. Use KubeSpawner
 `profile_options` with a generated/explicit twenty-choice mapping so each
 choice overrides the full MPS contract atomically. Add `gpu-mujoco-xpra` to
-`student_profiles`; do not add any other GPU profile there.
+`student_profiles`; do not add any other GPU profile there. Add a session
+duration dropdown that sets `active_deadline_seconds` to 7200, 14400, 28800,
+or 86400; set `cull.maxAge: 86400` and retain `cull.timeout: 3600`.
 
 - [ ] **Step 4: Verify green and render the chart**
 

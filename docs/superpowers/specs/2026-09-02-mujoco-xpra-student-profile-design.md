@@ -100,6 +100,16 @@ image qualification it may point at the in-cluster builder's unique test tag;
 the GitOps change is updated only after the image digest and functional test
 result are recorded.
 
+## Student session duration
+
+The standard student session duration is two hours. The MuJoCo launch form has
+a required duration dropdown with 2, 4, 8, and 24 hour choices; 24 hours is
+the absolute maximum. The existing one-hour idle cull stays in effect.
+
+The global culler maximum age is raised to 24 hours only so it does not
+preempt the approved extended session. The selected duration is enforced per
+pod with `active_deadline_seconds`: 7200, 14400, 28800, or 86400.
+
 ## Image size and supply-chain constraints
 
 - Base all image stages on the pinned Jupyter CUDA 12 digest above; do not use
