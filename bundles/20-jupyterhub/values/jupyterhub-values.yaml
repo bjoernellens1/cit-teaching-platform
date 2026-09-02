@@ -589,7 +589,7 @@ singleuser:
         # GLFW requires before VirtualGL can create the actual A100 context.
         def _xpra_command(port):
             return [
-                "xpra", "start", ":100", f"--bind-tcp=127.0.0.1:{port}",
+                "xpra", "desktop", ":100", f"--bind-tcp=127.0.0.1:{port}",
                 "--html=on", "--daemon=no", "--exit-with-children=yes",
                 "--start-child=/usr/local/bin/start-xpra-desktop.sh",
                 "--systemd-run=no", "--pulseaudio=no",
