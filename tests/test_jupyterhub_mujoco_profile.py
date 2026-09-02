@@ -2,6 +2,7 @@ from pathlib import Path
 
 
 VALUES = Path(__file__).parents[1] / "bundles/20-jupyterhub/values/jupyterhub-values.yaml"
+FLEET = Path(__file__).parents[1] / "bundles/20-jupyterhub/fleet.yaml"
 
 
 def test_mujoco_student_profile_declares_gpu_and_session_options():
@@ -43,3 +44,7 @@ def test_pre_spawn_hook_always_restores_the_persistent_home_mount():
     assert 'claim_name = f"claim-{spawner.user.name}"' in text
     assert '"mountPath": home_mount_path' in text
     assert "# Add conditional volumes (shared, courses) only after preserving" in text
+
+
+def test_jupyterhub_chart_is_on_the_current_supported_patch_line():
+    assert "version: 4.4.2" in FLEET.read_text()
