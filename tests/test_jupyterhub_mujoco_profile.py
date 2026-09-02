@@ -26,3 +26,11 @@ def test_mujoco_student_profile_declares_gpu_and_session_options():
     assert "# Cull after 24 hours of inactivity." in text
     assert "timeout: 86400" in text
     assert "maxAge: 86400" in text
+
+
+def test_xpra_proxy_config_is_mounted_in_the_jupyter_config_path():
+    text = VALUES.read_text()
+
+    assert "mountPath: /usr/local/etc/jupyter/jupyter_server_config.py" in text
+    assert '"xpra": {' in text
+    assert '"launcher_entry": {"title": "Desktop (Xpra)"}' in text

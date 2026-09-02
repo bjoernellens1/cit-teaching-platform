@@ -618,7 +618,7 @@ singleuser:
   # Allow large browser uploads in the notebook UI.
   extraFiles:
     jupyter-server-config:
-      mountPath: /etc/jupyter/jupyter_server_config.py
+      mountPath: /usr/local/etc/jupyter/jupyter_server_config.py
       stringData: |
         c.ServerApp.max_body_size = 1073741824  # 1 GiB
         c.ServerProxy.servers = {
