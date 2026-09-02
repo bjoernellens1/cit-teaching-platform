@@ -61,3 +61,6 @@ sops-age-key.txt
 coverage/
 .coverage
 htmlcov/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
