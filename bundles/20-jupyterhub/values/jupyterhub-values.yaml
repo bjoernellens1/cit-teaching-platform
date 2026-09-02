@@ -189,20 +189,6 @@ hub:
           # Set environment for postStart hook
           spawner.environment["INIT_DIRS"] = " ".join(init_dirs)
 
-          # Profile overrides merge environment/annotations but must never
-          # replace volumes. Add MPS client mounts after those overrides so
-          # Z2JH's dynamic home PVC and extraFiles (Xpra config) remain intact.
-          annotations = getattr(spawner, "extra_annotations", {}) or {}
-          if "gpu-memory" in annotations:
-              append_volume_mount(
-                  {"name": "mps-pipe", "hostPath": {"path": "/run/nvidia/mps/nvidia.com/gpu/pipe", "type": "DirectoryOrCreate"}},
-                  {"name": "mps-pipe", "mountPath": "/mps/nvidia.com/gpu/pipe"},
-              )
-              append_volume_mount(
-                  {"name": "mps-log", "hostPath": {"path": "/run/nvidia/mps/nvidia.com/gpu/log", "type": "DirectoryOrCreate"}},
-                  {"name": "mps-log", "mountPath": "/mps/nvidia.com/gpu/log"},
-              )
-
           for volume_spec, mount_spec in zip(volumes, volume_mounts):
               append_volume_mount(volume_spec, mount_spec)
 
@@ -215,7 +201,18 @@ hub:
 
     # Profile list hook for group-based profile filtering
     profile_list_hook: |
-      # Store the original profile list before overwriting with the hook
+      # Z2JH constructs these traits as dictionaries. KubeSpawner merges a
+      # dictionary profile override by key, preserving the dynamic home PVC,
+      # temp volume, and extraFiles-mounted Xpra configuration.
+      _mps_volumes = {
+          "mps-pipe": {"name": "mps-pipe", "hostPath": {"path": "/run/nvidia/mps/nvidia.com/gpu/pipe", "type": "DirectoryOrCreate"}},
+          "mps-log": {"name": "mps-log", "hostPath": {"path": "/run/nvidia/mps/nvidia.com/gpu/log", "type": "DirectoryOrCreate"}},
+      }
+      _mps_volume_mounts = {
+          "mps-pipe": {"name": "mps-pipe", "mountPath": "/mps/nvidia.com/gpu/pipe"},
+          "mps-log": {"name": "mps-log", "mountPath": "/mps/nvidia.com/gpu/log"},
+      }
+
       _mujoco_gpu_memory_choices = {
           str(gib): {
               "display_name": f"{gib} GiB",
@@ -227,6 +224,8 @@ hub:
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log",
                   },
+                  "volumes": _mps_volumes,
+                  "volume_mounts": _mps_volume_mounts,
               },
           }
           for gib in range(1, 21)
@@ -308,6 +307,8 @@ hub:
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
                   },
+                  "volumes": _mps_volumes,
+                  "volume_mounts": _mps_volume_mounts,
               }
           },
           {
@@ -330,6 +331,8 @@ hub:
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
                   },
+                  "volumes": _mps_volumes,
+                  "volume_mounts": _mps_volume_mounts,
               }
           },
           {
@@ -351,6 +354,8 @@ hub:
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
                   },
+                  "volumes": _mps_volumes,
+                  "volume_mounts": _mps_volume_mounts,
               }
           },
           {
@@ -372,6 +377,8 @@ hub:
                       "CUDA_MPS_PIPE_DIRECTORY": "/mps/nvidia.com/gpu/pipe",
                       "CUDA_MPS_LOG_DIRECTORY": "/mps/nvidia.com/gpu/log"
                   },
+                  "volumes": _mps_volumes,
+                  "volume_mounts": _mps_volume_mounts,
               }
           },
           {

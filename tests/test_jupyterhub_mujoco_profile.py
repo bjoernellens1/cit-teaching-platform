@@ -37,16 +37,16 @@ def test_xpra_proxy_config_is_mounted_in_the_jupyter_config_path():
     assert '"launcher_entry": {"title": "Desktop (Xpra)"}' in text
 
 
-def test_pre_spawn_hook_appends_mps_mounts_without_replacing_base_storage():
+def test_mps_profile_overrides_merge_with_chart_managed_storage():
     text = VALUES.read_text()
 
     assert 'def append_volume_mount(volume_spec, mount_spec):' in text
     assert 'if isinstance(spawner.volumes, dict):' in text
-    assert 'if "gpu-memory" in annotations:' in text
-    assert '"name": "mps-pipe"' in text
-    assert '"name": "mps-log"' in text
-    assert '"volumes": _mps_volumes' not in text
-    assert '"volume_mounts": _mps_volume_mounts' not in text
+    assert '_mps_volumes = {' in text
+    assert '_mps_volume_mounts = {' in text
+    assert '"volumes": _mps_volumes' in text
+    assert '"volume_mounts": _mps_volume_mounts' in text
+    assert "dynamic home PVC" in text
 
 
 def test_jupyterhub_chart_is_on_the_current_supported_patch_line():
