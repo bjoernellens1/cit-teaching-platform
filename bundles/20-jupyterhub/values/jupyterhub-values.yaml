@@ -584,8 +584,9 @@ singleuser:
       stringData: |
         c.ServerApp.max_body_size = 1073741824  # 1 GiB
 
-        # Xpra's bundled Xvfb crashes with the NVIDIA EGL stack. This system
-        # Xvfb command is the known-good CPS GPU cluster configuration.
+        # Pin Xvfb's own EGL loader to Mesa.  This prevents the NVIDIA EGL
+        # vendor from crashing Xvfb while retaining its GLX extension, which
+        # GLFW requires before VirtualGL can create the actual A100 context.
         def _xpra_command(port):
             return [
                 "xpra", "start", ":100", f"--bind-tcp=127.0.0.1:{port}",
@@ -594,7 +595,8 @@ singleuser:
                 "--systemd-run=no", "--pulseaudio=no",
                 "--file-transfer=yes", "--file-size-limit=1G", "--open-files=no",
                 "--clipboard=yes", "--notifications=yes", "--system-tray=yes",
-                "--xvfb=Xvfb -screen 0 1680x1050x24 -extension GLX "
+                "--xvfb=env __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json "
+                "Xvfb -screen 0 1680x1050x24 +extension GLX "
                 "+extension RANDR +extension RENDER +extension Composite "
                 "-nolisten tcp -noreset -dpi 96 -auth $XAUTHORITY",
                 "--dpi=96",

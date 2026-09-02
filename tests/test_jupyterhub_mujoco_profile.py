@@ -35,7 +35,8 @@ def test_xpra_proxy_config_is_mounted_in_the_jupyter_config_path():
     assert "mountPath: /usr/local/etc/jupyter/jupyter_server_config.py" in text
     assert '"xpra": {' in text
     assert '"launcher_entry": {"title": "Desktop (Xpra)"}' in text
-    assert '"--xvfb=Xvfb -screen 0 1680x1050x24 -extension GLX "' in text
+    assert '"--xvfb=env __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json "' in text
+    assert '"Xvfb -screen 0 1680x1050x24 +extension GLX "' in text
     assert '"--systemd-run=no"' in text
     assert '"--file-transfer=yes"' in text
     assert '"--file-size-limit=1G"' in text
