@@ -17,7 +17,7 @@ helm:
   # Install PostgreSQL from Bitnami chart
   repo: https://charts.bitnami.com/bitnami
   chart: postgresql
-  version: 16.2.5
+  version: 18.8.17
   releaseName: jupyterhub-postgresql
   values:
     # Use postgresql 16 explicitly
