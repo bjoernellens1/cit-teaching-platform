@@ -39,3 +39,11 @@ def test_enabled_config_cannot_omit_image_catalog():
  policy['policyHash']='sha256:'+hashlib.sha256(json.dumps({k:v for k,v in policy.items() if k!='policyHash'},sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
  config['policyHash']=policy['policyHash']
  with pytest.raises(ValueError,match='image'):compute.validate(config,policy)
+
+def test_enabled_config_requires_all_named_qualification_gates():
+ config=copy.deepcopy(CONFIG);config['enabled']=True;config['qualification']={};config['canonicalIdentityMapping']='reviewed'
+ config['images']={name:'registry/runner@sha256:'+'a'*64 for name in ('hubAdapter','notebook','adminConsole')}
+ policy=copy.deepcopy(POLICY);policy['approvedImages']=['registry/runner@sha256:'+'a'*64]
+ import hashlib
+ policy['policyHash']='sha256:'+hashlib.sha256(json.dumps({k:v for k,v in policy.items() if k!='policyHash'},sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest();config['policyHash']=policy['policyHash']
+ with pytest.raises(ValueError,match='gates'):compute.validate(config,policy)
