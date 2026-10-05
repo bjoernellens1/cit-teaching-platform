@@ -1,0 +1,17 @@
+# Review overlay only: NOT included by any Fleet bundle.
+# Enable only after released image digests, seeded grants, identity mappings and
+# qualification evidence are reviewed. Never install this into the live Hub yet.
+hub:
+  extraEnv:
+    CPS_COMPUTE_ENABLED: "0"
+    CPS_COMPUTE_HUB: "cit"
+    CPS_COMPUTE_POLICY_HASH: "sha256:bd2269a93fef4de1e6fc0124d6a6b07d11ac9708eb4b3fb56dd4f3d790ada2ce"
+    CPS_COMPUTE_CONFIG: "/etc/cps-compute/hub-config.json"
+  extraConfig:
+    99-cps-compute-released-adapter: |
+      import os
+      if os.environ.get("CPS_COMPUTE_ENABLED", "0") == "1":
+          import json
+          from cps_compute.hub import configure_hub
+          with open(os.environ["CPS_COMPUTE_CONFIG"], encoding="utf-8") as source:
+              configure_hub(c, json.load(source))

@@ -1,0 +1,50 @@
+{
+  "version": "0.1.0",
+  "enabled": false,
+  "hub": "cit",
+  "owner": "cit",
+  "namespace": "cit-jhub",
+  "policyHash": "sha256:bd2269a93fef4de1e6fc0124d6a6b07d11ac9708eb4b3fb56dd4f3d790ada2ce",
+  "hubBaseline": {
+    "chart": "4.4.2",
+    "jupyterhub": "5.5.2",
+    "kubespawner": "7.x",
+    "qualified": false
+  },
+  "hub6": {
+    "version": "6.0.1",
+    "enabled": false
+  },
+  "images": {
+    "hubAdapter": null,
+    "notebook": null,
+    "adminConsole": null
+  },
+  "adminConsole": {
+    "replicas": 1,
+    "database": "sqlite:///data/cit-console.sqlite",
+    "oauthClientId": "cit-course-admin",
+    "oauthSecretName": "cit-course-admin-oauth",
+    "hubServiceSecretName": "cit-course-admin-hub-service",
+    "policyServiceSecretName": "cit-course-admin-policy-service",
+    "databaseBackupSecretName": "cit-course-admin-backup",
+    "localCourses": true,
+    "moodleEnabled": false
+  },
+  "gatewayService": "cps-compute",
+  "canonicalIdentityMapping": null,
+  "qualification": {
+    "existingGrantsSeeded": false,
+    "identityStorageMappingReviewed": false,
+    "matchingBackupsVerified": false,
+    "oauthHardened": false,
+    "visitorAuthenticatedProxyVerified": false,
+    "sharedReservationsVerified": false,
+    "releaseCompatibilityVerified": false
+  },
+  "authenticatorGroupReplacement": "preserve-until-seeded",
+  "artifactBackend": "s3",
+  "artifactDeployment": "seaweedfs-on-truenas",
+  "physicalGPUCount": 8,
+  "nominalGPUDeviceMemoryGiB": 40
+}
