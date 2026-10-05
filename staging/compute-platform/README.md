@@ -18,7 +18,8 @@ No secret values, workloads or migration jobs are installed by this stage.
 Moodle remains planned / not deployed and local courses stay active.
 
 `hub-values.yaml` delegates to the released `cps_compute.hub.configure_hub(c,
-config)` adapter only if explicitly enabled. Its configuration file, released
+config)` adapter only if explicitly enabled. `hub-config.json` provides its exact released
+configuration keys with `enabled: false`. Its configuration file, released
 Hub adapter image, exact policy mount, identity mapping and secret references must
 be rendered from qualified release artifacts before activation. The adapter is
 not vendored into live Helm values. The overlay is intentionally not wired into

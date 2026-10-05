@@ -1,0 +1,7 @@
+{
+  "enabled": false,
+  "policyPath": "/etc/cps-compute/policy.json",
+  "identityMappingPath": "/etc/cps-compute/canonical-people.json",
+  "gatewayUrl": "http://cps-compute.cps-compute.svc.cluster.local:8000",
+  "serviceTokenEnv": "CIT_COMPUTE_POLICY_SERVICE_TOKEN"
+}
