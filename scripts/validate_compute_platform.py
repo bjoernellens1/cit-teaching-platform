@@ -18,6 +18,7 @@ def validate(config,policy):
     if config['authenticatorGroupReplacement'] != 'preserve-until-seeded' and not config['qualification']['existingGrantsSeeded']: raise ValueError('grant migration must precede group ownership change')
     if config['enabled']:
         if not all(config['qualification'].values()) or not config['canonicalIdentityMapping']: raise ValueError('identity, grant, storage, backup and release gates required')
+        if set(config.get('images',{}))!={'hubAdapter','notebook','adminConsole'}:raise ValueError('All three released image keys required')
         for image in config['images'].values():
             if not image or not re.fullmatch(r'[^\s@]+@sha256:[a-f0-9]{64}',image): raise ValueError('released immutable images required')
         if not policy['approvedImages']: raise ValueError('reviewed approved image catalog required')

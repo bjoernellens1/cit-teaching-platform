@@ -29,3 +29,13 @@ def test_adapter_import_is_guarded_and_unwatched():
  assert 'CPS_COMPUTE_ENABLED: "0"' in text
  assert text.index('if os.environ.get("CPS_COMPUTE_ENABLED"') < text.index("from cps_compute.hub import configure_hub")
  assert "staging/" not in (ROOT/"bundles/20-jupyterhub/fleet.yaml").read_text()
+
+def test_enabled_config_cannot_omit_image_catalog():
+ config=copy.deepcopy(CONFIG);config['enabled']=True
+ config['qualification']={k:True for k in config['qualification']};config['canonicalIdentityMapping']='reviewed'
+ config['images']={}
+ policy=copy.deepcopy(POLICY);policy['approvedImages']=['registry/runner@sha256:'+'a'*64]
+ import hashlib
+ policy['policyHash']='sha256:'+hashlib.sha256(json.dumps({k:v for k,v in policy.items() if k!='policyHash'},sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+ config['policyHash']=policy['policyHash']
+ with pytest.raises(ValueError,match='image'):compute.validate(config,policy)
