@@ -41,6 +41,8 @@ server:
   envFrom:
     - secretRef:
         name: authentik-secrets
+    - secretRef:
+        name: authentik-smtp
   
   resources:
     requests:
@@ -96,6 +98,8 @@ worker:
   envFrom:
     - secretRef:
         name: authentik-secrets
+    - secretRef:
+        name: authentik-smtp
   
   resources:
     requests:

@@ -168,3 +168,22 @@ kubectl get pods -n authentik
 - **Remember Me**: 7 days maximum
 - **Brute-force Protection**: Automatic lockout after failed attempts
 - **Network Policies**: Authentik namespace is isolated, only ingress allowed
+
+## Outgoing verification email
+
+The server and worker load `authentik-smtp` through `envFrom`. Its credentials
+and connection settings live in `authentik-smtp-sopssecret.yaml`, encrypted for
+the existing SOPS operator recipient. Do not place mailbox passwords in Helm
+values or command logs.
+
+SMTP uses `mail.lima-city.de:465`, implicit TLS with certificate verification,
+and `admin@ai-lab.science` as both authenticated username and sender. STARTTLS
+is disabled on this implicit TLS port. See the
+[lima-city settings](https://www.lima-city.de/hilfe/wie-kann-ich-meine-e-mail-adressen-einrichten)
+and [Authentik email configuration](https://docs.goauthentik.io/install-config/email/).
+
+Configuration qualification checks TLS reachability, authenticated SMTP and
+Authentik's application connection without sending a message. Actual delivery
+and the verification flow still require qualification before cross-Hub human
+identity linkage is enabled. Mail configuration alone does not mark directory
+addresses verified or activate human allowances.
