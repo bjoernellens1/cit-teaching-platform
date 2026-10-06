@@ -86,6 +86,15 @@ server:
 # =============================================================================
 
 worker:
+  # Optional standalone verification flow; never bound to login/enrollment.
+  volumes:
+    - name: optional-email-verification
+      configMap:
+        name: authentik-optional-email-verification
+  volumeMounts:
+    - name: optional-email-verification
+      mountPath: /blueprints/cps
+      readOnly: true
   # High availability: 2 replicas for flow/event processing
   replicas: 2
 

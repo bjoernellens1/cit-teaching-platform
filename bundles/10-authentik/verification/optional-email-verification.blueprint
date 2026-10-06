@@ -1,0 +1,121 @@
+version: 1
+metadata:
+  name: CPS optional email verification
+entries:
+- model: authentik_flows.flow
+  id: flow
+  identifiers:
+    slug: cps-email-verification
+  attrs:
+    name: Optional email verification
+    title: Verify your current email address
+    designation: stage_configuration
+    authentication: require_authenticated
+    denied_action: message_continue
+- model: authentik_stages_deny.denystage
+  id: deny
+  identifiers:
+    name: cps-email-verification-deny
+- model: authentik_stages_email.emailstage
+  id: email
+  identifiers:
+    name: cps-email-verification-email
+  attrs:
+    use_global_settings: true
+    activate_user_on_success: false
+    token_expiry: minutes=15
+    subject: 'CPS/CIT: verify your email address'
+    template: email/account_confirmation.html
+    recovery_max_attempts: 3
+    recovery_cache_timeout: minutes=10
+- model: authentik_policies_expression.expressionpolicy
+  id: prepare
+  identifiers:
+    name: cps-email-verification-prepare
+  attrs:
+    expression: "from django.db import transaction\nfrom django.utils.timezone import\
+      \ now\nfrom datetime import timedelta\nfrom authentik.core.models import User\n\
+      from authentik.flows.models import Flow, FlowToken\nvisitor = request.http_request.user\n\
+      plan = request.context.get(\"flow_plan\")\nif not visitor.is_authenticated or\
+      \ plan is None:\n    return True\nwith transaction.atomic():\n    user = User.objects.select_for_update().get(pk=visitor.pk)\n\
+      \    if not user.is_active or not user.email.strip():\n        return True\n\
+      \    identifier = \"cps-email-verification-cooldown-\" + str(user.pk)\n    cooldown\
+      \ = FlowToken.objects.select_for_update().filter(identifier=identifier).first()\n\
+      \    if cooldown is not None and not cooldown.is_expired:\n        ak_message(\"\
+      Please wait one minute before requesting another verification email.\")\n  \
+      \      return True\n    if cooldown is not None:\n        cooldown.delete()\n\
+      \    FlowToken.objects.create(identifier=identifier, user=user, flow=Flow.objects.get(slug=\"\
+      cps-email-verification\"), expires=now() + timedelta(seconds=60), _plan=b\"\"\
+      , revoke_on_execution=True)\n    plan.context[\"pending_user\"] = user\n   \
+      \ plan.context[\"email\"] = user.email\n    plan.context[\"cps_verification_email\"\
+      ] = user.email\n    plan.context[\"cps_verification_user\"] = str(user.pk)\n\
+      return False\n"
+- model: authentik_policies_expression.expressionpolicy
+  id: complete
+  identifiers:
+    name: cps-email-verification-record
+  attrs:
+    expression: "from django.db import transaction\nfrom django.core import signing\n\
+      from django.utils.timezone import now\nfrom authentik.core.models import User\n\
+      from authentik.flows.models import FlowToken\nplan = request.context.get(\"\
+      flow_plan\")\nif plan is None:\n    return True\ncontext = plan.context\ntoken\
+      \ = context.get(\"is_restored\")\nvisitor = request.http_request.user\nif not\
+      \ visitor.is_authenticated or not isinstance(token, FlowToken):\n    return\
+      \ True\nif token.pk is not None or token.user_id != visitor.pk or token.flow.slug\
+      \ != \"cps-email-verification\" or token.is_expired:\n    return True\nif not\
+      \ token.identifier.startswith(\"ak-email-stage-cps-email-verification-email-\"\
+      ):\n    return True\nwith transaction.atomic():\n    user = User.objects.select_for_update().get(pk=visitor.pk)\n\
+      \    if not user.is_active:\n        return True\n    if context.get(\"cps_verification_user\"\
+      ) != str(user.pk) or context.get(\"cps_verification_email\") != user.email or\
+      \ not user.email.strip():\n        ak_message(\"The account or email address\
+      \ changed. Please start verification again.\")\n        return True\n    proof\
+      \ = {\"version\": 1, \"user_id\": str(user.pk), \"email\": user.email, \"verified_at\"\
+      : now().isoformat()}\n    attributes = dict(user.attributes)\n    attributes[\"\
+      cps/email-verification\"] = signing.dumps(proof, salt=\"cps.email-verification.v1\"\
+      )\n    user.attributes = attributes\n    user.save(update_fields=[\"attributes\"\
+      ])\n    context.pop(\"is_restored\", None)\nreturn False\n"
+- model: authentik_flows.flowstagebinding
+  id: prepare-binding
+  identifiers:
+    target: !KeyOf 'flow'
+    stage: !KeyOf 'deny'
+    order: 10
+  attrs:
+    evaluate_on_plan: false
+    re_evaluate_policies: true
+- model: authentik_flows.flowstagebinding
+  id: email-binding
+  identifiers:
+    target: !KeyOf 'flow'
+    stage: !KeyOf 'email'
+    order: 20
+  attrs:
+    evaluate_on_plan: false
+    re_evaluate_policies: true
+- model: authentik_flows.flowstagebinding
+  id: complete-binding
+  identifiers:
+    target: !KeyOf 'flow'
+    stage: !KeyOf 'deny'
+    order: 30
+  attrs:
+    evaluate_on_plan: false
+    re_evaluate_policies: true
+- model: authentik_policies.policybinding
+  identifiers:
+    target: !KeyOf 'prepare-binding'
+    policy: !KeyOf 'prepare'
+    order: 0
+  attrs:
+    enabled: true
+    failure_result: true
+    timeout: 15
+- model: authentik_policies.policybinding
+  identifiers:
+    target: !KeyOf 'complete-binding'
+    policy: !KeyOf 'complete'
+    order: 0
+  attrs:
+    enabled: true
+    failure_result: true
+    timeout: 15

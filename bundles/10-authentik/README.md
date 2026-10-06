@@ -187,3 +187,11 @@ Authentik's application connection without sending a message. Actual delivery
 and the verification flow still require qualification before cross-Hub human
 identity linkage is enabled. Mail configuration alone does not mark directory
 addresses verified or activate human allowances.
+
+## Optional address verification
+
+A standalone signed-in [email-verification flow](verification/README.md) is
+available at `/if/flow/cps-email-verification/`. It is not required for existing
+logins. Its blueprint is mounted on the worker from the optional-verification
+ConfigMap. Proofs are signed and tied to the user and exact address. OIDC claims
+and cross-Hub account linkage remain unchanged pending real-user qualification.

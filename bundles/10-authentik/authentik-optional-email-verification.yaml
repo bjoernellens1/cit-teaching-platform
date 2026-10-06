@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-optional-email-verification
+  namespace: cit-auth
+data:
+  optional-email-verification.yaml: "version: 1\nmetadata:\n  name: CPS optional email\
+    \ verification\nentries:\n- model: authentik_flows.flow\n  id: flow\n  identifiers:\n\
+    \    slug: cps-email-verification\n  attrs:\n    name: Optional email verification\n\
+    \    title: Verify your current email address\n    designation: stage_configuration\n\
+    \    authentication: require_authenticated\n    denied_action: message_continue\n\
+    - model: authentik_stages_deny.denystage\n  id: deny\n  identifiers:\n    name:\
+    \ cps-email-verification-deny\n- model: authentik_stages_email.emailstage\n  id:\
+    \ email\n  identifiers:\n    name: cps-email-verification-email\n  attrs:\n  \
+    \  use_global_settings: true\n    activate_user_on_success: false\n    token_expiry:\
+    \ minutes=15\n    subject: 'CPS/CIT: verify your email address'\n    template:\
+    \ email/account_confirmation.html\n    recovery_max_attempts: 3\n    recovery_cache_timeout:\
+    \ minutes=10\n- model: authentik_policies_expression.expressionpolicy\n  id: prepare\n\
+    \  identifiers:\n    name: cps-email-verification-prepare\n  attrs:\n    expression:\
+    \ \"from django.db import transaction\\nfrom django.utils.timezone import\\\n\
+    \      \\ now\\nfrom datetime import timedelta\\nfrom authentik.core.models import\
+    \ User\\n\\\n      from authentik.flows.models import Flow, FlowToken\\nvisitor\
+    \ = request.http_request.user\\n\\\n      plan = request.context.get(\\\"flow_plan\\\
+    \")\\nif not visitor.is_authenticated or\\\n      \\ plan is None:\\n    return\
+    \ True\\nwith transaction.atomic():\\n    user = User.objects.select_for_update().get(pk=visitor.pk)\\\
+    n\\\n      \\    if not user.is_active or not user.email.strip():\\n        return\
+    \ True\\n\\\n      \\    identifier = \\\"cps-email-verification-cooldown-\\\"\
+    \ + str(user.pk)\\n    cooldown\\\n      \\ = FlowToken.objects.select_for_update().filter(identifier=identifier).first()\\\
+    n\\\n      \\    if cooldown is not None and not cooldown.is_expired:\\n     \
+    \   ak_message(\\\"\\\n      Please wait one minute before requesting another\
+    \ verification email.\\\")\\n  \\\n      \\      return True\\n    if cooldown\
+    \ is not None:\\n        cooldown.delete()\\n\\\n      \\    FlowToken.objects.create(identifier=identifier,\
+    \ user=user, flow=Flow.objects.get(slug=\\\"\\\n      cps-email-verification\\\
+    \"), expires=now() + timedelta(seconds=60), _plan=b\\\"\\\"\\\n      , revoke_on_execution=True)\\\
+    n    plan.context[\\\"pending_user\\\"] = user\\n   \\\n      \\ plan.context[\\\
+    \"email\\\"] = user.email\\n    plan.context[\\\"cps_verification_email\\\"\\\n\
+    \      ] = user.email\\n    plan.context[\\\"cps_verification_user\\\"] = str(user.pk)\\\
+    n\\\n      return False\\n\"\n- model: authentik_policies_expression.expressionpolicy\n\
+    \  id: complete\n  identifiers:\n    name: cps-email-verification-record\n  attrs:\n\
+    \    expression: \"from django.db import transaction\\nfrom django.core import\
+    \ signing\\n\\\n      from django.utils.timezone import now\\nfrom authentik.core.models\
+    \ import User\\n\\\n      from authentik.flows.models import FlowToken\\nplan\
+    \ = request.context.get(\\\"\\\n      flow_plan\\\")\\nif plan is None:\\n   \
+    \ return True\\ncontext = plan.context\\ntoken\\\n      \\ = context.get(\\\"\
+    is_restored\\\")\\nvisitor = request.http_request.user\\nif not\\\n      \\ visitor.is_authenticated\
+    \ or not isinstance(token, FlowToken):\\n    return\\\n      \\ True\\nif token.pk\
+    \ is not None or token.user_id != visitor.pk or token.flow.slug\\\n      \\ !=\
+    \ \\\"cps-email-verification\\\" or token.is_expired:\\n    return True\\nif not\\\
+    \n      \\ token.identifier.startswith(\\\"ak-email-stage-cps-email-verification-email-\\\
+    \"\\\n      ):\\n    return True\\nwith transaction.atomic():\\n    user = User.objects.select_for_update().get(pk=visitor.pk)\\\
+    n\\\n      \\    if not user.is_active:\\n        return True\\n    if context.get(\\\
+    \"cps_verification_user\\\"\\\n      ) != str(user.pk) or context.get(\\\"cps_verification_email\\\
+    \") != user.email or\\\n      \\ not user.email.strip():\\n        ak_message(\\\
+    \"The account or email address\\\n      \\ changed. Please start verification\
+    \ again.\\\")\\n        return True\\n    proof\\\n      \\ = {\\\"version\\\"\
+    : 1, \\\"user_id\\\": str(user.pk), \\\"email\\\": user.email, \\\"verified_at\\\
+    \"\\\n      : now().isoformat()}\\n    attributes = dict(user.attributes)\\n \
+    \   attributes[\\\"\\\n      cps/email-verification\\\"] = signing.dumps(proof,\
+    \ salt=\\\"cps.email-verification.v1\\\"\\\n      )\\n    user.attributes = attributes\\\
+    n    user.save(update_fields=[\\\"attributes\\\"\\\n      ])\\n    context.pop(\\\
+    \"is_restored\\\", None)\\nreturn False\\n\"\n- model: authentik_flows.flowstagebinding\n\
+    \  id: prepare-binding\n  identifiers:\n    target: !KeyOf 'flow'\n    stage:\
+    \ !KeyOf 'deny'\n    order: 10\n  attrs:\n    evaluate_on_plan: false\n    re_evaluate_policies:\
+    \ true\n- model: authentik_flows.flowstagebinding\n  id: email-binding\n  identifiers:\n\
+    \    target: !KeyOf 'flow'\n    stage: !KeyOf 'email'\n    order: 20\n  attrs:\n\
+    \    evaluate_on_plan: false\n    re_evaluate_policies: true\n- model: authentik_flows.flowstagebinding\n\
+    \  id: complete-binding\n  identifiers:\n    target: !KeyOf 'flow'\n    stage:\
+    \ !KeyOf 'deny'\n    order: 30\n  attrs:\n    evaluate_on_plan: false\n    re_evaluate_policies:\
+    \ true\n- model: authentik_policies.policybinding\n  identifiers:\n    target:\
+    \ !KeyOf 'prepare-binding'\n    policy: !KeyOf 'prepare'\n    order: 0\n  attrs:\n\
+    \    enabled: true\n    failure_result: true\n    timeout: 15\n- model: authentik_policies.policybinding\n\
+    \  identifiers:\n    target: !KeyOf 'complete-binding'\n    policy: !KeyOf 'complete'\n\
+    \    order: 0\n  attrs:\n    enabled: true\n    failure_result: true\n    timeout:\
+    \ 15\n"
