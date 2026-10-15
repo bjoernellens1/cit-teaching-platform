@@ -69,6 +69,8 @@ hub:
         - profile
         - email
         - groups
+        # Dex issues refresh tokens only for an explicit offline-access request.
+        - offline_access
 
       # User info mapping
       username_claim: preferred_username

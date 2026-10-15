@@ -1,0 +1,10 @@
+{
+  "status": "reviewable semantic delta only; no live before-image or mutation",
+  "object": {"kind": "Secret", "namespace": "cit-jhub", "name": "hub"},
+  "decodedDataKey": "values.yaml",
+  "path": "/hub/config/GenericOAuthenticator/scope",
+  "expectedBefore": ["openid", "profile", "email", "groups"],
+  "after": ["openid", "profile", "email", "groups", "offline_access"],
+  "requiresFreshExactBeforeImageAndCAS": true,
+  "liveApplied": false
+}
