@@ -546,6 +546,49 @@ proxy:
 # =============================================================================
 
 singleuser:
+  # Preserve current public IPv4 egress except direct notebook TCP/UDP NFS/RPC.
+  networkPolicy:
+    enabled: true
+    # Requires NetworkPolicy endPort (deployed k3s kube-router implements ranges).
+    # ICMP is provider-defined; standard kube-router PMTU/ping accepts remain.
+    egress:
+    - to:
+      - ipBlock:
+          cidr: 0.0.0.0/0
+          except:
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+          - 169.254.169.254/32
+      ports:
+      - protocol: TCP
+        port: 1
+        endPort: 110
+      - protocol: TCP
+        port: 112
+        endPort: 2048
+      - protocol: TCP
+        port: 2050
+        endPort: 65535
+      - protocol: UDP
+        port: 1
+        endPort: 110
+      - protocol: UDP
+        port: 112
+        endPort: 2048
+      - protocol: UDP
+        port: 2050
+        endPort: 65535
+      - protocol: SCTP
+        port: 1
+        endPort: 65535
+    egressAllowRules:
+      cloudMetadataServer: false
+      dnsPortsCloudMetadataServer: true
+      dnsPortsKubeSystemNamespace: true
+      dnsPortsPrivateIPs: true
+      nonPrivateIPs: false
+      privateIPs: false
   # Default notebook image
   image:
     name: ghcr.io/mul-cps/cit-jupyter-notebook
