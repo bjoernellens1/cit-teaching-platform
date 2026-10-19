@@ -546,6 +546,9 @@ proxy:
 # =============================================================================
 
 singleuser:
+  # NetworkPolicy blocks metadata; GPU Pods cannot use a privileged iptables init.
+  cloudMetadata:
+    blockWithIptables: false
   # Preserve current public IPv4 egress except direct notebook TCP/UDP NFS/RPC.
   networkPolicy:
     enabled: true
