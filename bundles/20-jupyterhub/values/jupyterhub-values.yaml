@@ -250,7 +250,7 @@ hub:
                   "cpu_guarantee": 0.5,
                   "mem_limit": "6G",
                   "mem_guarantee": "1G",
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-standard-cpu",
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook@sha256:09380c3d17913064bd0c590c27a71d80a8995da5a0ed73e82cbd7cec8fae6218",
                   "scheduler_name": "kai-scheduler",
                   "extra_labels": {"kai.scheduler/queue": "courses"},
                   "priority_class_name": "kai-course-high"
@@ -265,7 +265,7 @@ hub:
                   "cpu_guarantee": 2,
                   "mem_limit": "24G",
                   "mem_guarantee": "4G",
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-standard-cpu",
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook@sha256:09380c3d17913064bd0c590c27a71d80a8995da5a0ed73e82cbd7cec8fae6218",
                   "scheduler_name": "kai-scheduler",
                   "extra_labels": {"kai.scheduler/queue": "phd-interactive"},
                   "priority_class_name": "kai-phd-interactive"
@@ -280,7 +280,7 @@ hub:
                   "cpu_guarantee": 8,
                   "mem_limit": "128G",
                   "mem_guarantee": "16G",
-                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook:latest-standard-cpu",
+                  "image": "ghcr.io/mul-cps/cit-jupyter-notebook@sha256:09380c3d17913064bd0c590c27a71d80a8995da5a0ed73e82cbd7cec8fae6218",
                   "scheduler_name": "kai-scheduler",
                   "extra_labels": {"kai.scheduler/queue": "phd-interactive"},
                   "priority_class_name": "kai-phd-interactive"
@@ -592,10 +592,11 @@ singleuser:
       dnsPortsPrivateIPs: true
       nonPrivateIPs: false
       privateIPs: false
-  # Default notebook image
+  # Addon-only timer overlay on the qualified CIT6acd runtime.
+  # CPU profile overrides and chart pre-pullers select these same bytes.
   image:
     name: ghcr.io/mul-cps/cit-jupyter-notebook
-    tag: "latest-standard-cpu"
+    tag: "latest-standard-cpu@sha256:09380c3d17913064bd0c590c27a71d80a8995da5a0ed73e82cbd7cec8fae6218"
     pullSecrets:
       - name: harbor-cps-users-pull
 
