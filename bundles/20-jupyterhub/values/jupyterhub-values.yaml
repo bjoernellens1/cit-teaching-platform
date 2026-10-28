@@ -582,10 +582,34 @@ singleuser:
     jupyter-server-config:
       mountPath: /usr/local/etc/jupyter/jupyter_server_config.py
       stringData: |
+        import os
+
         c.ServerApp.max_body_size = 1073741824  # 1 GiB
 
         # Xdummy gives Xpra a resizable RANDR desktop.  It is GLX-capable for
         # GLFW while VirtualGL still creates MuJoCo's real A100 EGL context.
+        def _xpra_runtime_available():
+            # This file is mounted into every notebook profile, while only
+            # desktop images contain this complete Xpra runtime.
+            executables = (
+                "/usr/bin/xpra",
+                "/usr/bin/Xorg",
+                "/usr/bin/dbus-launch",
+                "/usr/bin/xfce4-session",
+                "/usr/local/bin/start-xpra-desktop.sh",
+            )
+            assets = (
+                "/etc/xpra/xorg.conf",
+                "/usr/share/xpra/www/index.html",
+            )
+            return all(
+                os.path.isfile(path) and os.access(path, os.X_OK)
+                for path in executables
+            ) and all(
+                os.path.isfile(path) and os.access(path, os.R_OK)
+                for path in assets
+            )
+
         def _xpra_command(port):
             return [
                 "xpra", "desktop", ":100", f"--bind-tcp=127.0.0.1:{port}",
@@ -601,13 +625,16 @@ singleuser:
                 "--dpi=96",
             ]
 
-        c.ServerProxy.servers = {
-          "xpra": {
-            "command": _xpra_command,
-            "timeout": 60,
-            "launcher_entry": {"title": "Desktop (Xpra)"},
-          },
-        }
+        _proxy_servers = dict(c.ServerProxy.get("servers", {}) or {})
+        if _xpra_runtime_available():
+            _proxy_servers["xpra"] = {
+                "command": _xpra_command,
+                "timeout": 60,
+                "launcher_entry": {"title": "Desktop (Xpra)"},
+            }
+        else:
+            _proxy_servers.pop("xpra", None)
+        c.ServerProxy.servers = _proxy_servers
 
   # Use lifecycle hooks instead of initContainers to create directories
   # postStart runs after container starts, when home volume is already mounted

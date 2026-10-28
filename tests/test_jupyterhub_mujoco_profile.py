@@ -1,4 +1,8 @@
 from pathlib import Path
+from types import SimpleNamespace
+import os
+from unittest.mock import patch
+import pytest
 
 
 VALUES = Path(__file__).parents[1] / "bundles/20-jupyterhub/values/jupyterhub-values.yaml"
@@ -33,7 +37,7 @@ def test_xpra_proxy_config_is_mounted_in_the_jupyter_config_path():
     text = VALUES.read_text()
 
     assert "mountPath: /usr/local/etc/jupyter/jupyter_server_config.py" in text
-    assert '"xpra": {' in text
+    assert '_proxy_servers["xpra"] = {' in text
     assert '"xpra", "desktop", ":100"' in text
     assert '"launcher_entry": {"title": "Desktop (Xpra)"}' in text
     assert '"--xvfb=env __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json "' in text
@@ -45,6 +49,101 @@ def test_xpra_proxy_config_is_mounted_in_the_jupyter_config_path():
     assert '"--file-size-limit=1G"' in text
     assert '"--open-files=no"' in text
     assert '"--clipboard=yes"' in text
+
+
+def _mounted_jupyter_config_source():
+    lines = VALUES.read_text().splitlines()
+    start = next(
+        i for i, line in enumerate(lines)
+        if line.strip() == "stringData: |" and "jupyter-server-config:" in lines[i - 2]
+    )
+    source = []
+    for line in lines[start + 1 :]:
+        if line and not line.startswith("        "):
+            break
+        source.append(line[8:] if line.startswith("        ") else "")
+    return "\n".join(source)
+
+
+class _ConfigSection(dict):
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+
+
+def _evaluate_mounted_config(tmp_path, unavailable_path=None, non_executable_path=None):
+    required_paths = (
+        "/usr/bin/xpra",
+        "/usr/bin/Xorg",
+        "/usr/bin/dbus-launch",
+        "/usr/bin/xfce4-session",
+        "/usr/local/bin/start-xpra-desktop.sh",
+        "/etc/xpra/xorg.conf",
+        "/usr/share/xpra/www/index.html",
+    )
+    for path in required_paths:
+        fixture_path = tmp_path / path.lstrip("/")
+        fixture_path.parent.mkdir(parents=True, exist_ok=True)
+        fixture_path.write_text("fixture")
+        if path in required_paths[:5]:
+            fixture_path.chmod(0o755)
+    if unavailable_path is not None:
+        (tmp_path / unavailable_path.lstrip("/")).unlink()
+    if non_executable_path is not None:
+        (tmp_path / non_executable_path.lstrip("/")).chmod(0o644)
+
+    def image_path(path):
+        return tmp_path / path.lstrip("/")
+
+    c = SimpleNamespace(
+        ServerApp=_ConfigSection(),
+        ServerProxy=_ConfigSection(servers={"other": {"port": 9000}}),
+    )
+    real_access = os.access
+    with patch("os.path.isfile", lambda path: image_path(path).is_file()), patch(
+        "os.access", lambda path, mode: real_access(image_path(path), mode)
+    ):
+        exec(_mounted_jupyter_config_source(), {"c": c})
+    return c.ServerProxy.servers
+
+
+def test_xpra_launcher_is_registered_for_a_compatible_desktop_image(tmp_path):
+    servers = _evaluate_mounted_config(tmp_path)
+
+    assert servers["other"] == {"port": 9000}
+    assert servers["xpra"]["launcher_entry"] == {"title": "Desktop (Xpra)"}
+    command = servers["xpra"]["command"](23500)
+    assert command[:4] == ["xpra", "desktop", ":100", "--bind-tcp=127.0.0.1:23500"]
+    assert "--start-child=/usr/local/bin/start-xpra-desktop.sh" in command
+
+
+@pytest.mark.parametrize(
+    "unavailable_path",
+    (
+        "/usr/bin/xpra",
+        "/usr/bin/Xorg",
+        "/usr/bin/dbus-launch",
+        "/usr/bin/xfce4-session",
+        "/usr/local/bin/start-xpra-desktop.sh",
+        "/etc/xpra/xorg.conf",
+        "/usr/share/xpra/www/index.html",
+    ),
+)
+def test_xpra_launcher_is_omitted_when_image_lacks_required_runtime(
+    tmp_path, unavailable_path
+):
+    servers = _evaluate_mounted_config(tmp_path, unavailable_path=unavailable_path)
+
+    assert "other" in servers
+    assert "xpra" not in servers
+
+
+def test_xpra_launcher_is_omitted_when_start_script_is_not_executable(tmp_path):
+    servers = _evaluate_mounted_config(
+        tmp_path, non_executable_path="/usr/local/bin/start-xpra-desktop.sh"
+    )
+
+    assert "other" in servers
+    assert "xpra" not in servers
 
 
 def test_mps_profile_overrides_merge_with_chart_managed_storage():
