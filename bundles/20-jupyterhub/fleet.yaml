@@ -26,3 +26,7 @@ targets:
     clusterSelector:
       matchLabels:
         env: cit-teaching
+
+# Apply reviewed live Hub configuration after the chart is rendered.
+kustomize:
+  dir: .
