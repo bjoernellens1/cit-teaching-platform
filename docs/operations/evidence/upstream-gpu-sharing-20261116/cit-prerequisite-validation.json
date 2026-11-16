@@ -1,0 +1,137 @@
+{
+  "purpose": "Bounded CIT prerequisite repair for reviewed Hub persistence",
+  "base_commit": "faccf5cc902384bf9c7dc674d02797fc9084b727",
+  "review": "Root approved minimal two-file diff and fresh released-chart renders before application",
+  "charts": {
+    "authentik": "2025.12.4",
+    "sops-secrets-operator": "0.18.5"
+  },
+  "sops": {
+    "reason": "Repeated observed OOMKilled exit137 at128Mi,86restarts",
+    "memory_limit_before": "128Mi",
+    "memory_limit_after": "512Mi",
+    "requests_unchanged": true,
+    "image_version_unchanged": true
+  },
+  "authentik": {
+    "intent": "Declare existing live SMTP Secret references and read-only blueprint ConfigMap mount using released chart values",
+    "deployment_specs_exact_live": true,
+    "credential_and_idp_configuration_data_unchanged": true,
+    "new_postrenderer_required": false
+  },
+  "validation": [
+    {
+      "source": "authentik",
+      "changedResources": [
+        {
+          "resource": [
+            "apps/v1",
+            "Deployment",
+            "cit-auth",
+            "authentik-server"
+          ],
+          "paths": [
+            "/spec/template/spec/containers/0/envFrom/2"
+          ]
+        },
+        {
+          "resource": [
+            "apps/v1",
+            "Deployment",
+            "cit-auth",
+            "authentik-worker"
+          ],
+          "paths": [
+            "/spec/template/spec/containers/0/envFrom/2",
+            "/spec/template/spec/containers/0/volumeMounts",
+            "/spec/template/spec/volumes"
+          ]
+        }
+      ],
+      "deployments": [
+        {
+          "name": "authentik-server",
+          "freshRawNamespace": "cit-auth",
+          "strictServerDryRun": true,
+          "templateDiffPaths": [],
+          "renderedImage": "ghcr.io/goauthentik/server:2025.12.4",
+          "liveImage": "ghcr.io/goauthentik/server:2025.12.4",
+          "replicasUnchanged": true,
+          "fullSpecDiffPaths": []
+        },
+        {
+          "name": "authentik-worker",
+          "freshRawNamespace": "cit-auth",
+          "strictServerDryRun": true,
+          "templateDiffPaths": [],
+          "renderedImage": "ghcr.io/goauthentik/server:2025.12.4",
+          "liveImage": "ghcr.io/goauthentik/server:2025.12.4",
+          "replicasUnchanged": true,
+          "fullSpecDiffPaths": []
+        }
+      ],
+      "configurationComparisons": [
+        {
+          "kind": "Secret",
+          "namespace": "cit-auth",
+          "name": "authentik",
+          "configurationContentExactlyLive": true
+        },
+        {
+          "kind": "ConfigMap",
+          "namespace": "cit-auth",
+          "name": "authentik-postgresql-configuration",
+          "configurationContentExactlyLive": true
+        },
+        {
+          "kind": "ConfigMap",
+          "namespace": "cit-auth",
+          "name": "authentik-postgresql-extended-configuration",
+          "configurationContentExactlyLive": true
+        }
+      ]
+    },
+    {
+      "source": "sops",
+      "changedResources": [
+        {
+          "resource": [
+            "apps/v1",
+            "Deployment",
+            "sops-system",
+            "sops-secrets-operator"
+          ],
+          "paths": [
+            "/spec/template/spec/containers/0/resources/limits/memory"
+          ]
+        }
+      ],
+      "deployments": [
+        {
+          "name": "sops-secrets-operator",
+          "freshRawNamespace": null,
+          "strictServerDryRun": true,
+          "templateDiffPaths": [
+            "/spec/containers/0/resources/limits/memory"
+          ],
+          "renderedImage": "isindir/sops-secrets-operator:0.12.5",
+          "liveImage": "isindir/sops-secrets-operator:0.12.5",
+          "replicasUnchanged": true,
+          "fullSpecDiffPaths": [
+            "/template/spec/containers/0/resources/limits/memory"
+          ]
+        }
+      ],
+      "configurationComparisons": []
+    }
+  ],
+  "validation_commands": [
+    "helm template authentik <Fleet-bundled-authentik-2025.12.4-chart> --namespace cit-auth -f bundles/10-authentik/values/authentik-values.yaml --set-string global.postgresql.auth.password=dummy-password-for-helm-validation",
+    "helm template sops-secrets-operator <Fleet-bundled-sops-secrets-operator-0.18.5-chart> --namespace sops-system -f bundles/01-sops-operator/values/values.yaml",
+    "For each rendered Deployment, strict server dry-run replacement with current resourceVersion; compare server-defaulted Deployment.spec to live",
+    "Compare rendered Secret/ConfigMap data privately to live; retain only equality booleans",
+    "Compare fresh chart render before/after candidate: only the two Authentik Deployment templates and SOPS memory limit differ",
+    "git diff --check"
+  ],
+  "not_included": "No Secret contents, full Helm renders, private credentials or IdP configuration data"
+}

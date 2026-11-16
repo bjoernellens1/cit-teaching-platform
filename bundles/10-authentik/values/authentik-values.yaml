@@ -41,6 +41,8 @@ server:
   envFrom:
     - secretRef:
         name: authentik-secrets
+    - secretRef:
+        name: authentik-smtp
   
   resources:
     requests:
@@ -96,6 +98,18 @@ worker:
   envFrom:
     - secretRef:
         name: authentik-secrets
+    - secretRef:
+        name: authentik-smtp
+
+  # Preserve the reviewed live blueprint mount; content stays in its existing ConfigMap.
+  volumeMounts:
+    - name: optional-email-verification
+      mountPath: /blueprints/cps
+      readOnly: true
+  volumes:
+    - name: optional-email-verification
+      configMap:
+        name: authentik-optional-email-verification
   
   resources:
     requests:
