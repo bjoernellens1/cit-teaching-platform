@@ -1,5 +1,5 @@
 {
-  "stage": "prepared pin, before live apply or eviction",
+  "stage": "Three Root-released ordinary Evictions completed; source-only default-strategy restoration prepared, awaiting Root Fleet pin",
   "base_commit": "193747673c91a64787b6c9683020c07fc6a03f56",
   "chart_version": "16.2.5",
   "existing_native_database_version": "18.4",
@@ -23,5 +23,98 @@
   "activation": "Root pin after review; verify exact STS desired and unchanged oldPodUID/CID before separate normal PDB-honoring Eviction release",
   "rollback_of_strategy": "After replacement Ready/currentrevision and same DB/PVC validated, remove only temporary primary.updateStrategy override; retain digest permanently; no template change or additional Pod restart",
   "no_Source_or_Hub_configuration_change": true,
-  "no_live_mutations_in_preparation": true
+  "no_live_mutations_in_preparation": true,
+  "completed_at": "2026-11-17T23:36:06.052815+00:00",
+  "handoffs": {
+    "pg": {
+      "oldUID": "3e525936-7ac4-45d0-902c-cb473a37f0af",
+      "oldCID": "5ae08b08deb50f93ed649be50ecb7102cee0c956a6e61d415e8b57012f9dfd0d",
+      "old_first_observed_stopped": "2026-11-17T23:26:32.143460+00:00",
+      "old_stop_observed_before_new_container_start": true,
+      "new": {
+        "name": "jupyterhub-postgresql-0",
+        "uid": "72006ee3-dc4b-4ea0-bd44-fbbf52186e9e",
+        "node": "k3s-wk-gpu3",
+        "deleting": false,
+        "phase": "Running",
+        "Ready": true,
+        "CID": "containerd://2d7912258c7f1cd10111f28a1babfcdea5d92f7d4b8829de87d7fd508c1d05fd",
+        "imageID": "docker.io/bitnami/postgresql@sha256:256bf40a7343862b9a66d1d27cd34599e80dad99284fc5450b24cb02e26ff34e",
+        "startedAt": "2026-11-17T23:26:49Z"
+      },
+      "eviction_count": 1
+    },
+    "hub": {
+      "oldUID": "1fe4e6e6-5f78-4d35-9e2b-5686e36140c9",
+      "oldCID": "eb9dc51ba7b62fe7345ad1ac1b7e2c846f26d816e0fd14072c24d74d1883df03",
+      "old_first_observed_stopped": "2026-11-17T23:31:46.930391+00:00",
+      "old_stop_observed_before_new_container_start": true,
+      "new": {
+        "name": "hub-ddf455d78-qtdpt",
+        "uid": "da0ba4c0-0c19-443f-87e9-2957b887685d",
+        "node": "k3s-wk-gpu2",
+        "deleting": false,
+        "phase": "Running",
+        "Ready": true,
+        "CID": "containerd://559fcd575eb55700e0a5b0314e25d50bc2496059d365279d1c508ff18a0b87f4",
+        "imageID": "ghcr.io/mul-cps/cps-compute@sha256:bf138c57e6a6243143b71ca6850487f5237ec25add5cee248d1ebabd221409a6",
+        "startedAt": "2026-11-17T23:31:47Z"
+      },
+      "eviction_count": 1
+    },
+    "proxy": {
+      "oldUID": "343a8435-a216-4645-abf7-68f75770aa3b",
+      "oldCID": "be0cccbee1bdb776569e35d19ccd122c4121a4951b2b4e0e983a2e85e4af87ac",
+      "old_first_observed_stopped": "2026-11-17T23:32:55.872630+00:00",
+      "old_stop_observed_before_new_container_start": true,
+      "new": {
+        "name": "proxy-86f4955947-k8h49",
+        "uid": "e85399a2-1cfc-4bb3-9d1b-a29674b5cdaa",
+        "node": "k3s-wk-gpu3",
+        "deleting": false,
+        "phase": "Running",
+        "Ready": true,
+        "CID": "containerd://ac778540458cb12f78dfa28eb4cf49f251b35abbd1b4042a8e6731d8aa20f7b7",
+        "imageID": "quay.io/jupyterhub/configurable-http-proxy@sha256:522738d5285e4be758da5023194cbc95249efdadaa62a0998c8ed1aa2890b2da",
+        "startedAt": "2026-11-17T23:32:58Z"
+      },
+      "eviction_count": 1
+    }
+  },
+  "final_checks": {
+    "PostgreSQL_18_4_same_image_and_PVC": true,
+    "schema_and_all_custody_role_account_group_user_spawner_share_data_exact": true,
+    "Secrets9_ConfigMaps13_UID_data_exact": true,
+    "normal_SourceRegistry_original_config_no_QA": true,
+    "public_TLS_health": 200,
+    "strict_21_table_hash_equality": false,
+    "actual_only_changed_tables": [
+      "api_tokens",
+      "oauth_clients"
+    ],
+    "expected_service_startup_delta": {
+      "new_token": {
+        "id": 745,
+        "user_id": null,
+        "service": "jupyterhub-idle-culler",
+        "scope": "inherit"
+      },
+      "existing_service_tokens_last_activity_only": [
+        326,
+        744
+      ],
+      "OAuth135": "service-cit-argo-ui secret-only salted rehash"
+    },
+    "Root_selected_replica_IM_maintenance": "Longhorn degraded with two current remoteRW copies; not claimed healthy3",
+    "no_notebook_or_job_stop_or_Source_call": true
+  },
+  "evidence_serializer_correction": "Initial users bytea memoryview-address hashing was nondeterministic; original evidence retained, baseline reconstructed from unchanged nativebackup with bytes.hex and all26users everyfield independently equal. No database/admin change.",
+  "restore_strategy_proof": {
+    "full_fresh_chart_resources": 6,
+    "only_StatefulSet_updateStrategy_changes": true,
+    "Pod_template_exact_unchanged": true,
+    "admitted_full_spec_only_strategy_change": true,
+    "PG_same_new_UID_CID_ready": true,
+    "digest_permanent": true
+  }
 }

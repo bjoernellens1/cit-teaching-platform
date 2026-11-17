@@ -42,9 +42,6 @@ helm:
         adminPasswordKey: postgres-password
         userPasswordKey: password
     primary:
-      updateStrategy:
-        type: OnDelete
-        rollingUpdate: null
       resources:
         requests:
           cpu: 250m
