@@ -1,0 +1,27 @@
+{
+  "stage": "prepared pin, before live apply or eviction",
+  "base_commit": "193747673c91a64787b6c9683020c07fc6a03f56",
+  "chart_version": "16.2.5",
+  "existing_native_database_version": "18.4",
+  "image_digest": "sha256:256bf40a7343862b9a66d1d27cd34599e80dad99284fc5450b24cb02e26ff34e",
+  "permanent_image_pin": true,
+  "temporary_update_strategy": "OnDelete",
+  "chart_default_rollingUpdate_removed_with_null": true,
+  "causal_RED": "type OnDelete alone retains rollingUpdate and is rejected by API validation",
+  "GREEN": "fresh full chart and server dry-run exact image-reference + updateStrategy only; all other five resources unchanged",
+  "full_chart_resource_count": 6,
+  "fresh_baseline_admitted_entire_spec_exact_live": true,
+  "candidate_admitted_spec_exact_desired": true,
+  "old_PG_UID_CID_unchanged_before_apply": true,
+  "native_backup": {
+    "bytes": 209464,
+    "sha256": "385c258d63c53f4420b55b7e4983ba12550c62e9b4df954d7d53ebdb842d2e6f",
+    "matching_pg_dump": "18.4",
+    "catalog_TABLE_DATA_entries": 21,
+    "full_restore_claim": false
+  },
+  "activation": "Root pin after review; verify exact STS desired and unchanged oldPodUID/CID before separate normal PDB-honoring Eviction release",
+  "rollback_of_strategy": "After replacement Ready/currentrevision and same DB/PVC validated, remove only temporary primary.updateStrategy override; retain digest permanently; no template change or additional Pod restart",
+  "no_Source_or_Hub_configuration_change": true,
+  "no_live_mutations_in_preparation": true
+}

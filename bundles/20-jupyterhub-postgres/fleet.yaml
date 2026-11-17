@@ -23,6 +23,7 @@ helm:
     # Use postgresql 16 explicitly
     image:
       tag: latest
+      digest: sha256:256bf40a7343862b9a66d1d27cd34599e80dad99284fc5450b24cb02e26ff34e
     fullnameOverride: "jupyterhub-postgresql"
     global:
       postgresql:
@@ -41,6 +42,9 @@ helm:
         adminPasswordKey: postgres-password
         userPasswordKey: password
     primary:
+      updateStrategy:
+        type: OnDelete
+        rollingUpdate: null
       resources:
         requests:
           cpu: 250m
