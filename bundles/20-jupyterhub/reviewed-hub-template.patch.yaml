@@ -9,8 +9,6 @@
         cps.compute/consumer-config-sha256: 4f8779e8bc8ac6ae01a090f1cad8dfe297f7ea58337a822a1a4d152bf0934109
         cps.compute/qualification-reconcile: '2026-10-09T13:41:29.627545+00:00'
         cps.unileoben.ac.at/cpu-addon-values-sha256: fa804557e60592b39e83bb9418313826d3f9fea143290b9dc4103c807173a42d
-        cps.unileoben.ac.at/gpu3-source-qa-module: 0da43f168270900591a10a31f3650ab2b3778e2f175a7b63df55e78ad274e203
-        cps.unileoben.ac.at/gpu3-source-qa-permit: cd11a50a34684858e16d8a4c5c3f310c7c7ce55136dec48eae9e2565f4469d04
         cps.unileoben.ac.at/native-approval-stage: sdk-156c6f5b
         cps.unileoben.ac.at/upstream-helper-settings: acd8ebbafd1288757f6ae3250a2b57869df1d0ae7d813841a9e4e662f8b81dd7
         cps.unileoben.ac.at/upstream-policy-hash: sha256:2b2ad6ce656db38a0e9cc2a0d3365c48d6061a835d317236a322776c11dc3fcb
@@ -214,9 +212,6 @@
         - mountPath: /etc/cps-personal-exclusive
           name: cps-personal-exclusive
           readOnly: true
-        - mountPath: /etc/cps-gpu3-source-qa
-          name: cps-gpu3-source-qa
-          readOnly: true
       dnsPolicy: ClusterFirst
       imagePullSecrets:
       - name: cps-native-image-pull
@@ -296,7 +291,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-hub-gpu3-qa-9564224cb149
+          secretName: cps-upstream-hub-config-registry-20261116
       - name: existing-secret
         secret:
           defaultMode: 420
@@ -381,10 +376,6 @@
         secret:
           defaultMode: 288
           secretName: cps-rino-mujoco-exception
-      - configMap:
-          defaultMode: 420
-          name: cit-gpu3-source-qa-cd11a50a3468
-        name: cps-gpu3-source-qa
 - op: replace
   path: /spec/strategy
   value:
