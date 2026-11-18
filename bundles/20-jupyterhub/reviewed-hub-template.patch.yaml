@@ -14,6 +14,8 @@
         cps.unileoben.ac.at/upstream-policy-hash: sha256:2b2ad6ce656db38a0e9cc2a0d3365c48d6061a835d317236a322776c11dc3fcb
         cps.unileoben.ac.at/upstream-runtime-bootstrap: 29aafccd9c6a5436a3e6f9bda0ee5ed1e8e3e1ff5e55f4de67c9375bb5e59a99
         kubectl.kubernetes.io/restartedAt: '2026-11-16T11:46:00+01:00'
+        cps.unileoben.ac.at/gpu1-source-qa-module: 6f57f6b20b069a1baabff883d168e035d81147de5f87f101cdba4c4f3200f75d
+        cps.unileoben.ac.at/gpu1-source-qa-permit: c40a5a0c354b3fc5bf597b47b23f69d475d5625e9e49c518f248bd0b7b3392ff
       labels:
         app: jupyterhub
         app.kubernetes.io/component: hub
@@ -212,6 +214,9 @@
         - mountPath: /etc/cps-personal-exclusive
           name: cps-personal-exclusive
           readOnly: true
+        - name: cps-gpu1-source-qa
+          mountPath: /etc/cps-gpu1-source-qa
+          readOnly: true
       dnsPolicy: ClusterFirst
       imagePullSecrets:
       - name: cps-native-image-pull
@@ -291,7 +296,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cps-upstream-hub-config-registry-20261116
+          secretName: cit-hub-gpu1-qa-b909f18b90d5
       - name: existing-secret
         secret:
           defaultMode: 420
@@ -376,6 +381,10 @@
         secret:
           defaultMode: 288
           secretName: cps-rino-mujoco-exception
+      - name: cps-gpu1-source-qa
+        configMap:
+          name: cit-gpu1-source-qa-c40a5a0c354b
+          defaultMode: 420
 - op: replace
   path: /spec/strategy
   value:
