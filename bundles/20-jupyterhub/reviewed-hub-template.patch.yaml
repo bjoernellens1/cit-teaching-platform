@@ -9,13 +9,13 @@
         cps.compute/consumer-config-sha256: 4f8779e8bc8ac6ae01a090f1cad8dfe297f7ea58337a822a1a4d152bf0934109
         cps.compute/qualification-reconcile: '2026-10-09T13:41:29.627545+00:00'
         cps.unileoben.ac.at/cpu-addon-values-sha256: fa804557e60592b39e83bb9418313826d3f9fea143290b9dc4103c807173a42d
+        cps.unileoben.ac.at/gpu1-source-qa-module: 6f57f6b20b069a1baabff883d168e035d81147de5f87f101cdba4c4f3200f75d
+        cps.unileoben.ac.at/gpu1-source-qa-permit: 70718c772496cb4249f511ee0321635484363d4e336d259cabf7273869322d4d
         cps.unileoben.ac.at/native-approval-stage: sdk-156c6f5b
         cps.unileoben.ac.at/upstream-helper-settings: acd8ebbafd1288757f6ae3250a2b57869df1d0ae7d813841a9e4e662f8b81dd7
         cps.unileoben.ac.at/upstream-policy-hash: sha256:2b2ad6ce656db38a0e9cc2a0d3365c48d6061a835d317236a322776c11dc3fcb
         cps.unileoben.ac.at/upstream-runtime-bootstrap: 29aafccd9c6a5436a3e6f9bda0ee5ed1e8e3e1ff5e55f4de67c9375bb5e59a99
         kubectl.kubernetes.io/restartedAt: '2026-11-16T11:46:00+01:00'
-        cps.unileoben.ac.at/gpu1-source-qa-module: 6f57f6b20b069a1baabff883d168e035d81147de5f87f101cdba4c4f3200f75d
-        cps.unileoben.ac.at/gpu1-source-qa-permit: 676bdc534cf35f950a2fcd9fc6c24f227ca8962b5d228b9de83a8aa77a10ef75
       labels:
         app: jupyterhub
         app.kubernetes.io/component: hub
@@ -214,8 +214,8 @@
         - mountPath: /etc/cps-personal-exclusive
           name: cps-personal-exclusive
           readOnly: true
-        - name: cps-gpu1-source-qa
-          mountPath: /etc/cps-gpu1-source-qa
+        - mountPath: /etc/cps-gpu1-source-qa
+          name: cps-gpu1-source-qa
           readOnly: true
       dnsPolicy: ClusterFirst
       imagePullSecrets:
@@ -296,7 +296,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-hub-gpu1-qa-55d3cf8e9c19
+          secretName: cit-hub-gpu1-qa-ddb5a4933bfb
       - name: existing-secret
         secret:
           defaultMode: 420
@@ -381,10 +381,10 @@
         secret:
           defaultMode: 288
           secretName: cps-rino-mujoco-exception
-      - name: cps-gpu1-source-qa
-        configMap:
-          name: cit-gpu1-source-qa-676bdc534cf3
+      - configMap:
           defaultMode: 420
+          name: cit-gpu1-source-qa-70718c772496
+        name: cps-gpu1-source-qa
 - op: replace
   path: /spec/strategy
   value:
