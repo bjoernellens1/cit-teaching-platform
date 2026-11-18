@@ -119,6 +119,11 @@ hub:
           </script>
         {% endblock script %}
   # Resource limits for hub
+    shared-home-config:
+      mountPath: /usr/local/etc/jupyterhub/jupyterhub_config.d/90-shared-home.py
+      stringData: |
+        # Use the standard chart config.d loader; runtime credentials stay pinned.
+        c.JupyterHub.template_paths = ["/usr/local/share/jupyterhub/shared-home-templates"]
   resources:
     requests:
       cpu: 100m
@@ -161,9 +166,6 @@ hub:
   # ==========================================================================
   config:
     JupyterHub:
-      # Native Shares API discovery on the ordinary Hub Home page.
-      template_paths:
-      - /usr/local/share/jupyterhub/shared-home-templates
       authenticator_class: generic-oauth
 
     GenericOAuthenticator:
