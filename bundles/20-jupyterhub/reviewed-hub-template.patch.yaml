@@ -300,7 +300,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-mujoco-admin-759631fef5104c23
+          secretName: cit-normal-no-recovery-9fdde7646f8436f3
       - name: existing-secret
         secret:
           defaultMode: 420
