@@ -16,7 +16,7 @@
         kubectl.kubernetes.io/restartedAt: '2026-11-16T11:46:00+01:00'
         cps.unileoben.ac.at/shared-home-sha256: 9ff1637259afbbad79c789e9e6a0cf6754df9b7f43cd90b41c8d258978a237d9
         cps.unileoben.ac.at/shared-home-config-sha256: f430ed6a5700061a1570c77094003c81586136953197d4d302e5495d2df7ed87
-        cps.unileoben.ac.at/cit-personal-compat-sha256: fa785e4e0b2970f2ee754fea71a2213c34081d29b78fec72a1e60aff06334bd6
+        cps.unileoben.ac.at/cit-personal-compat-sha256: 3126268e39b058a421a6f4431f0d3421bab3019538e04bead52c56d94b57204d
       labels:
         app: jupyterhub
         app.kubernetes.io/component: hub
@@ -114,7 +114,7 @@
               name: native-lifecycle147-hub-7b45a67fa2718eca-control
         - name: CPS_NATIVE_GROUP_POLICY_TRANSITION_REFERENCE
           value: /etc/cps-native-proof/policy-transition.json
-        image: ghcr.io/mul-cps/cps-compute@sha256:e6a515b43f29280cd2ccc8f212bb1d63d9071cf77bbb3facc09d3076ba655cdc
+        image: ghcr.io/mul-cps/cps-compute@sha256:af7aac2e7c94ecd3bf3d4e6467e0b9a2263adcfa200d5498267b872153c24ef9
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 30
@@ -300,7 +300,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-personal-compat-d3a4153f9cefdf56
+          secretName: cit-mujoco-admin-759631fef5104c23
       - name: existing-secret
         secret:
           defaultMode: 420
