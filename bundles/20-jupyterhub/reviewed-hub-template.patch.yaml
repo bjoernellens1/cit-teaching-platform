@@ -300,7 +300,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-mujoco-fraction-ba7fd10c159d1780
+          secretName: cit-student-shared5-rino-20261123
       - name: existing-secret
         secret:
           defaultMode: 420
