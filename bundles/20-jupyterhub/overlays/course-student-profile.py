@@ -12,7 +12,10 @@ _course_memory_sizes = ('2', '5')
 _course_student_memory = '2'
 _course_shared_slug = 'gpu-shared-lecture'
 
-_course_form_template = """{% include 'form.html' %}
+_course_form_template = """{% if user_options and user_options.profile not in (profile_list | map(attribute='slug') | list) %}
+{% set user_options = {} %}
+{% endif %}
+{% include 'form.html' %}
 <script>
 (() => {
   const sectionStarts = [

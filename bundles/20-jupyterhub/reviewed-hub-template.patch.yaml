@@ -300,7 +300,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-role-profiles-fc3131776cc9
+          secretName: cit-role-profiles-b9a8be42faa4
       - name: existing-secret
         secret:
           defaultMode: 420
