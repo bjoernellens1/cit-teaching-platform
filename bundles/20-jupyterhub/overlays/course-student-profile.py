@@ -15,6 +15,9 @@ _course_shared_slug = 'gpu-shared-lecture'
 _course_form_template = """{% if user_options and user_options.profile not in (profile_list | map(attribute='slug') | list) %}
 {% set user_options = {} %}
 {% endif %}
+{% if profile_list and profile_list[0].cit_access is defined %}
+<p class="mb-3" id="cit-notebook-access">Notebook access <strong>{{ profile_list[0].cit_access | e }}</strong></p>
+{% endif %}
 {% include 'form.html' %}
 <script>
 (() => {
@@ -38,10 +41,12 @@ _course_form_template = """{% if user_options and user_options.profile not in (p
 </script>
 """
 
-async def _course_standard_user(spawner):
+async def _course_groups(spawner):
     state = await spawner.user.get_auth_state()
-    groups = set((state or {}).get("oauth_user", {}).get("groups", []))
-    return not groups.intersection({"jhub-admins", "jhub-powerusers"})
+    return set((state or {}).get("oauth_user", {}).get("groups", []) or [])
+
+async def _course_standard_user(spawner):
+    return not (await _course_groups(spawner)).intersection({"jhub-admins", "jhub-powerusers"})
 
 async def _course_profiles(spawner):
     rows = await _course_previous_profiles(spawner)
@@ -54,7 +59,13 @@ async def _course_profiles(spawner):
     overrides = rows[fraction_index].setdefault("kubespawner_override", {})
     overrides.setdefault("image_pull_secrets", ["harbor-cps-users-pull"])
     fixed = copy.deepcopy(rows[fraction_index])
-    standard = await _course_standard_user(spawner)
+    groups = await _course_groups(spawner)
+    access = "Student"
+    if "jhub-admins" in groups:
+        access = "Administrator"
+    elif "jhub-powerusers" in groups:
+        access = "Power user"
+    standard = access == "Student"
     memory = fixed["profile_options"]["gpu_memory_gib"]
     memory["choices"] = {
         size: {**memory["choices"][size], "default": size == _course_student_memory}
@@ -72,10 +83,10 @@ async def _course_profiles(spawner):
             },
         }
         framework_description = "PyTorch or TensorFlow 2.20.0"
-    fixed.update(display_name="GPU Shared (2 or 5 GiB)", default=True, cit_section="Student profiles",
+    fixed.update(display_name="GPU Shared (2 or 5 GiB)", default=not standard, cit_section="Student profiles",
                  description=f"Choose 2 or 5 GiB of shared A100 VRAM with {framework_description}. Two-hour session.")
     cpu = [
-        {**row, "default": False, "cit_section": "Student profiles"}
+        {**row, "default": standard, "cit_section": "Student profiles", "cit_access": access}
         for row in rows if row.get("slug") == "cpu-small"
     ]
     assigned = []

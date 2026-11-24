@@ -62,11 +62,12 @@ def test_student_menu_has_only_two_shared_sizes_and_cpu():
     hooks = load_hook()
     rows = asyncio.run(hooks.KubeSpawner.profile_list(spawner()))
     assert [row["slug"] for row in rows] == ["cpu-small", FRACTION]
+    assert rows[0]["cit_access"] == "Student"
     choices = rows[1]["profile_options"]["gpu_memory_gib"]["choices"]
     assert rows[1]["kubespawner_override"]["image_pull_secrets"] == ["harbor-cps-users-pull"]
     assert set(choices) == {"2", "5"}
     assert choices["2"]["default"] and not choices["5"]["default"]
-    assert rows[1]["default"] and not rows[0]["default"]
+    assert rows[0]["default"] and not rows[1]["default"]
     assert "session_duration_hours" not in rows[1]["profile_options"]
     assert len(PROFILES[-1]["profile_options"]["gpu_memory_gib"]["choices"]) == 20
 
@@ -144,6 +145,7 @@ def test_student_choices_are_the_first_section_for_admin_accounts(login):
     student = asyncio.run(profile_list(spawner(owner=login)))
     administrator = asyncio.run(profile_list(spawner(owner=login, groups=("jhub-admins",))))
     assert [row["slug"] for row in administrator[:2]] == ["cpu-small", SHARED]
+    assert administrator[0]["cit_access"] == "Administrator"
     assert [row["cit_section"] for row in administrator] == [
         "Student profiles", "Student profiles", "Research and power-user profiles",
         "Research and power-user profiles", "Administrator-only profiles",
@@ -156,6 +158,7 @@ def test_student_choices_are_the_first_section_for_admin_accounts(login):
 def test_poweruser_has_student_and_research_sections_without_admin_only_choices():
     profile_list = load_hook().KubeSpawner.profile_list
     rows = asyncio.run(profile_list(spawner(groups=("jhub-powerusers",))))
+    assert rows[0]["cit_access"] == "Power user"
     assert set(row["cit_section"] for row in rows) == {
         "Student profiles", "Research and power-user profiles",
     }
