@@ -5,6 +5,7 @@ import sys
 from unittest.mock import patch
 
 import pytest
+from traitlets.config import Config
 
 
 HOOK = Path(__file__).parents[1] / "bundles/20-jupyterhub/overlays/course-student-profile.py"
@@ -37,8 +38,10 @@ async def original_pre(spawner):
 
 def load_hook(tensorflow_enabled=False):
     container = SimpleNamespace(KubeSpawner=SimpleNamespace(profile_list=original_profiles,
-                                pre_spawn_hook=original_pre), Spawner=SimpleNamespace())
+                                pre_spawn_hook=original_pre), Spawner=SimpleNamespace(), JupyterHub=Config())
     modules = {
+        "jupyterhub.handlers.base": SimpleNamespace(BaseHandler=object),
+        "jupyterhub.utils": SimpleNamespace(url_path_join=lambda base, path: base.rstrip("/") + "/" + path.lstrip("/")),
         "cps_compute.personal_fraction": SimpleNamespace(SLUG=FRACTION),
         "cps_compute.personal_gpu": SimpleNamespace(CIT_ADMIN_MUJOCO="gpu-mujoco-admin"),
         "cps_compute_hub.personal_gpu": SimpleNamespace(
@@ -55,7 +58,7 @@ def spawner(owner="student", groups=(), name="", **options):
     async def get_state():
         return {"oauth_user": {"groups": list(groups)}}
     user = SimpleNamespace(name=owner, get_auth_state=get_state)
-    return SimpleNamespace(user=user, name=name, user_options=options)
+    return SimpleNamespace(user=user, name=name, user_options=options, hub=SimpleNamespace(base_url="/hub/"))
 
 
 def test_student_menu_has_only_two_shared_sizes_and_cpu():
@@ -63,6 +66,7 @@ def test_student_menu_has_only_two_shared_sizes_and_cpu():
     rows = asyncio.run(hooks.KubeSpawner.profile_list(spawner()))
     assert [row["slug"] for row in rows] == ["cpu-small", FRACTION]
     assert rows[0]["cit_access"] == "Student"
+    assert rows[0]["cit_help_url"] == "/hub/notebook-help"
     choices = rows[1]["profile_options"]["gpu_memory_gib"]["choices"]
     assert rows[1]["kubespawner_override"]["image_pull_secrets"] == ["harbor-cps-users-pull"]
     assert set(choices) == {"2", "5"}

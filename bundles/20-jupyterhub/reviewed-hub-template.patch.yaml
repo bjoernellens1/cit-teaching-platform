@@ -300,7 +300,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-role-cpu-small-0ddce71340e3
+          secretName: cit-role-quick-start-d9d7faaa545b
       - name: existing-secret
         secret:
           defaultMode: 420
