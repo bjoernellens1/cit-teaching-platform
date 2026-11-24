@@ -91,120 +91,18 @@ _course_form_template = """{% if user_options and user_options.profile not in (p
 {% set user_options = {} %}
 {% endif %}
 {% if profile_list and profile_list[0].cit_access is defined %}
-{% set cpu = profile_list[0] %}
-<style>
-.cit-spawn-page > .row:first-child { display: none; }
-.cit-spawn-page { margin-top: clamp(1rem, 4vw, 2.5rem); }
-.cit-spawn-page > .row > .col-md-8 { width: min(100%, 960px); }
-.cit-spawn { font-family: var(--bs-font-sans-serif, system-ui, sans-serif); }
-.cit-spawn h1 { display: none; font-size: clamp(1.5rem, 3vw, 1.85rem); margin-bottom: .4rem; }
-.cit-spawn-page .cit-spawn h1 { display: block; }
-.cit-spawn h2 { font-size: 1rem; font-weight: 600; }
-.cit-spawn .cit-meta { display: flex; align-items: baseline; justify-content: space-between;
-  gap: .6rem 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
-.cit-spawn .cit-access { color: var(--bs-secondary-color, #535f6b); margin: 0; }
-.cit-spawn .cit-card, .cit-spawn details { border: 1px solid var(--bs-border-color, #d8dee4); border-radius: .75rem; }
-.cit-spawn .cit-card { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  padding: 1rem 1.25rem; box-shadow: 0 1px 3px rgb(0 0 0 / 7%); }
-.cit-spawn .cit-card h2 { margin-bottom: .3rem; }
-.cit-spawn .cit-card p { margin: 0; color: var(--bs-secondary-color, #535f6b); }
-.cit-spawn .cit-card button { min-width: 7rem; border-radius: .4rem; }
-.cit-spawn .cit-shared { border-left: 3px solid var(--bs-primary, #2573b8); border-radius: .25rem;
-  padding: .7rem 1rem; margin: 1rem 0; background: var(--bs-tertiary-bg, #f5f6f7); }
-.cit-spawn .cit-meta a, .cit-spawn .cit-shared a { color: var(--bs-link-color, #1769aa); }
-.cit-spawn details > summary { padding: 1rem; font-weight: 600; cursor: pointer; }
-.cit-spawn .cit-options { padding: 0 1rem 1rem; }
-.cit-spawn .cit-section-heading { margin: 1.25rem 0 .6rem; }
-.cit-spawn .cit-options .js-profile-label { border: 1px solid var(--bs-border-color, #d8dee4);
-  border-radius: .55rem; margin: 0 0 .5rem; padding: .75rem; }
-.cit-spawn .cit-options .js-profile-label:has(input[name=profile]:checked) {
-  border-color: var(--bs-primary, #2573b8); background: var(--bs-primary-bg-subtle, #f2f7fc);
-}
-.cit-spawn .cit-options .js-profile-label h3 { font-size: 1.05rem; }
-.cit-spawn .feedback-container { margin-top: 1rem; }
-.cit-spawn :focus-visible { outline: 2px solid var(--bs-primary, #2573b8); outline-offset: 3px; }
-@media (max-width: 575px) {
-  .cit-spawn .cit-card { align-items: stretch; flex-direction: column; }
-}
-</style>
-<div class="cit-spawn" id="cit-spawn">
-  <h1>Start your personal server</h1>
-  <div class="cit-meta">
-    <p class="cit-access" id="cit-notebook-access">Notebook access <strong>{{ cpu.cit_access | e }}</strong></p>
-    <a href="{{ cpu.cit_help_url | e }}">Notebook help</a>
+  <div id="cit-profile-context" data-access="{{ profile_list[0].cit_access | e }}"
+       data-shared="{{ profile_list[1].slug | e }}" hidden>
+    {% for profile in profile_list %}
+      {% if profile.cit_section and loop.changed(profile.cit_section) %}
+      <span data-profile="{{ profile.slug | e }}" data-section="{{ profile.cit_section | e }}"></span>
+      {% endif %}
+    {% endfor %}
   </div>
-  <section class="cit-card" aria-labelledby="cit-quick-name">
-    <div>
-      <h2 id="cit-quick-name">{{ cpu.display_name | e }}</h2>
-      <p>{{ cpu.description | e }}</p>
-    </div>
-    <button type="button" id="cit-start-cpu" class="btn btn-jupyter" aria-label="Start CPU Small" hidden>Start</button>
-  </section>
-  <div class="cit-shared">
-    <strong>Need a GPU for your lecture?</strong><br>
-    <a id="cit-open-shared" href="#profile-item-{{ profile_list[1].slug | e }}">Choose a shared GPU notebook with 2 or 5 GiB</a>
-  </div>
-  <details id="cit-profile-options" open>
-    <summary>Change profile</summary>
-    <div class="cit-options">
-{% include 'form.html' %}
-    </div>
-  </details>
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const layout = document.getElementById("cit-spawn");
-  const form = layout && layout.closest("form");
-  if (!form) return;
-  const container = form.closest(".container");
-  if (container) container.classList.add("cit-spawn-page");
-  const options = layout.querySelector("details");
-  const footer = form.querySelector(".feedback-container");
-  const submit = footer && footer.querySelector("button[type=submit]");
-  const cpu = form.querySelector("#profile-item-cpu-small");
-  const start = layout.querySelector("#cit-start-cpu");
-  if (cpu && submit && form.requestSubmit) {
-    const spacer = footer.previousElementSibling;
-    if (spacer && spacer.tagName === "BR") spacer.remove();
-    layout.querySelector(".cit-options").appendChild(footer);
-    submit.textContent = "Start selected profile";
-    options.open = Boolean(form.parentElement.querySelector(".spawn-error-msg"));
-    start.hidden = false;
-    start.addEventListener("click", () => {
-      cpu.checked = true;
-      form.requestSubmit(submit);
-    });
-  }
-  layout.querySelector("#cit-open-shared").addEventListener("click", event => {
-    const shared = document.getElementById(event.currentTarget.hash.slice(1));
-    if (!shared) return;
-    event.preventDefault();
-    options.open = true;
-    shared.focus({ preventScroll: true });
-    shared.scrollIntoView({ block: "nearest" });
-  });
-  const sectionStarts = [
-    {%- for profile in profile_list %}
-    {%- if profile.cit_section and loop.changed(profile.cit_section) %}
-    [{{ profile.slug | tojson }}, {{ profile.cit_section | tojson }}],
-    {%- endif %}
-    {%- endfor %}
-  ];
-  for (const [slug, title] of sectionStarts) {
-    const option = document.getElementById('profile-item-' + slug);
-    const row = option && option.closest('.js-profile-label');
-    if (!row) continue;
-    const heading = document.createElement('h2');
-    heading.className = 'cit-section-heading';
-    heading.textContent = title;
-    row.before(heading);
-  }
-});
-</script>
-{% else %}
-{% include 'form.html' %}
 {% endif %}
+{% include 'form.html' %}
 """
+
 
 async def _course_groups(spawner):
     state = await spawner.user.get_auth_state()
@@ -251,8 +149,7 @@ async def _course_profiles(spawner):
     fixed.update(display_name="GPU Shared (2 or 5 GiB)", default=not standard, cit_section="Student profiles",
                  description=f"Choose 2 or 5 GiB of shared A100 VRAM with {framework_description}. Two-hour session.")
     cpu = [
-        {**row, "default": standard, "cit_section": "Student profiles", "cit_access": access,
-         "cit_help_url": url_path_join(spawner.hub.base_url, _course_help_route)}
+        {**row, "default": standard, "cit_section": "Student profiles", "cit_access": access}
         for row in rows if row.get("slug") == "cpu-small"
     ]
     assigned = []

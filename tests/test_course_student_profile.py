@@ -66,7 +66,6 @@ def test_student_menu_has_only_two_shared_sizes_and_cpu():
     rows = asyncio.run(hooks.KubeSpawner.profile_list(spawner()))
     assert [row["slug"] for row in rows] == ["cpu-small", FRACTION]
     assert rows[0]["cit_access"] == "Student"
-    assert rows[0]["cit_help_url"] == "/hub/notebook-help"
     choices = rows[1]["profile_options"]["gpu_memory_gib"]["choices"]
     assert rows[1]["kubespawner_override"]["image_pull_secrets"] == ["harbor-cps-users-pull"]
     assert set(choices) == {"2", "5"}

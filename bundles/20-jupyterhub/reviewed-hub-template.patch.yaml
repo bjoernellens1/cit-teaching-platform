@@ -221,6 +221,14 @@
         - mountPath: /usr/local/etc/jupyterhub/jupyterhub_config.d/90-shared-home.py
           subPath: shared-home-config
           name: files
+        - mountPath: /usr/local/share/jupyterhub/shared-home-templates/spawn.html
+          subPath: personal-spawn
+          name: files
+          readOnly: true
+        - mountPath: /usr/local/share/jupyterhub/shared-home-templates/cps-personal-spawn.html
+          subPath: cps-personal-spawn
+          name: files
+          readOnly: true
       dnsPolicy: ClusterFirst
       imagePullSecrets:
       - name: cps-native-image-pull
@@ -300,7 +308,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-role-quick-start-d9d7faaa545b
+          secretName: cit-spawn-layout-values-6322c79f5b45
       - name: existing-secret
         secret:
           defaultMode: 420
@@ -387,12 +395,16 @@
           secretName: cps-rino-mujoco-exception
       - name: files
         secret:
-          secretName: hub
+          secretName: cit-spawn-layout-files-6e5b84739a10
           items:
           - key: shared-home
             path: shared-home
           - key: shared-home-config
             path: shared-home-config
+          - key: personal-spawn
+            path: personal-spawn
+          - key: cps-personal-spawn
+            path: cps-personal-spawn
 - op: replace
   path: /spec/strategy
   value:

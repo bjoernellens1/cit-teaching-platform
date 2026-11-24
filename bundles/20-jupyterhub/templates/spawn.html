@@ -1,0 +1,125 @@
+{% extends "cps-personal-spawn.html" %}
+
+{% block stylesheet %}
+  {{ super() }}
+  <style>
+    .personal-spawn .cit-access { display: flex; justify-content: space-between; gap: .5rem 1rem; flex-wrap: wrap; }
+    .personal-spawn .personal-launch[hidden] { display: none; }
+    .personal-spawn .cit-choices { padding: 0 1rem 1rem; }
+    .personal-spawn .cit-choices .option-card { margin-bottom: .5rem; }
+    .personal-spawn .cit-choices .option-section { margin: 1.25rem 0 .65rem; }
+    .personal-spawn .cit-choices .feedback-container { margin-top: 1rem; }
+  </style>
+{% endblock stylesheet %}
+
+{% block main %}
+  <div class="container personal-spawn">
+    <h1>Start your personal server</h1>
+    <div class="personal-intro cit-access">
+      <span id="cit-access" hidden>Notebook access <strong></strong></span>
+      <a href="{{ base_url }}notebook-help">Notebook help</a>
+    </div>
+    {% if for_user and user.name != for_user.name %}
+      <p>Spawning server for {{ for_user.name }}</p>
+    {% endif %}
+    {% if error_message %}
+      <p class="spawn-error-msg alert alert-danger">Error: {{ error_message }}</p>
+    {% elif error_html_message %}
+      <p class="spawn-error-msg alert alert-danger">{{ error_html_message | safe }}</p>
+    {% endif %}
+    <form enctype="multipart/form-data" id="spawn_form" action="{{ url }}" method="post" role="form">
+      <div class="personal-launch" id="cit-cpu-launch" hidden>
+        <div class="personal-selection">
+          <h2 id="cit-cpu-name"></h2>
+          <p id="cit-cpu-resources"></p>
+          <p>For notebooks and CPU work. No GPU reserved.</p>
+        </div>
+        <div class="feedback-container">
+          <button type="button" id="cit-start-cpu" class="btn btn-jupyter form-control" aria-label="Start CPU Small">Start</button>
+          <div class="feedback-widget hidden"><i class="fa fa-spinner"></i></div>
+        </div>
+      </div>
+      <div class="personal-shared" id="cit-shared" hidden>
+        <strong>Shared GPU notebooks</strong>
+        <div><a id="cit-open-shared" href="#personal-options">Show 2 GiB and 5 GiB options</a></div>
+      </div>
+      <details id="personal-options" class="personal-options" open>
+        <summary>Change profile</summary>
+        <div class="cit-choices">
+          {{ spawner_options_form | safe }}
+          <div class="feedback-container">
+            <button type="submit" id="cit-start-selected" class="btn btn-jupyter form-control">Start selected profile</button>
+            <div class="feedback-widget hidden"><i class="fa fa-spinner"></i></div>
+          </div>
+        </div>
+      </details>
+    </form>
+  </div>
+{% endblock main %}
+
+{% block script %}
+  {{ super.super() }}
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("spawn_form");
+    const context = form && form.querySelector("#cit-profile-context");
+    if (!context) return;
+    const options = document.getElementById("personal-options");
+    const access = document.getElementById("cit-access");
+    access.querySelector("strong").textContent = context.dataset.access;
+    access.hidden = false;
+
+    for (const section of context.querySelectorAll("[data-profile]")) {
+      const input = document.getElementById("profile-item-" + section.dataset.profile);
+      const row = input && input.closest(".js-profile-label");
+      if (!row) continue;
+      const heading = document.createElement("h2");
+      heading.className = "option-section section-title";
+      heading.textContent = section.dataset.section;
+      row.before(heading);
+    }
+    const rows = form.querySelectorAll(".js-profile-label");
+    for (const row of rows) {
+      row.classList.add("option-card");
+      row.querySelector("h3").classList.add("option-card-title");
+      const summary = row.querySelector("p");
+      if (summary) summary.classList.add("option-card-copy");
+    }
+    const updateSelection = () => {
+      for (const row of rows) {
+        row.classList.toggle("selected", row.querySelector('input[name="profile"]').checked);
+      }
+    };
+    form.addEventListener("change", updateSelection);
+    updateSelection();
+
+    const cpu = form.querySelector("#profile-item-cpu-small");
+    const submit = document.getElementById("cit-start-selected");
+    if (cpu && !cpu.disabled && form.requestSubmit) {
+      const row = cpu.closest(".js-profile-label");
+      document.getElementById("cit-cpu-name").textContent = row.querySelector("h3").textContent;
+      const description = row.querySelector("p");
+      if (description) document.getElementById("cit-cpu-resources").textContent = description.textContent;
+      document.getElementById("cit-cpu-launch").hidden = false;
+      options.open = Boolean(document.querySelector(".spawn-error-msg"));
+      document.getElementById("cit-start-cpu").addEventListener("click", () => {
+        cpu.checked = true;
+        updateSelection();
+        form.requestSubmit(submit);
+      });
+    }
+    const shared = document.getElementById("profile-item-" + context.dataset.shared);
+    if (shared) {
+      const link = document.getElementById("cit-open-shared");
+      link.href = "#" + shared.id;
+      document.getElementById("cit-shared").hidden = false;
+      link.addEventListener("click", event => {
+        event.preventDefault();
+        options.open = true;
+        shared.focus({ preventScroll: true });
+        shared.scrollIntoView({ block: "nearest" });
+      });
+    }
+  }, { once: true });
+  </script>
+{% endblock script %}
