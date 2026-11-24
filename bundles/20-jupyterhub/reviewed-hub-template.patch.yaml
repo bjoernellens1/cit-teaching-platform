@@ -300,7 +300,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-student-shared5-rino-20261123
+          secretName: cit-lecture-shared-2-5-20261124
       - name: existing-secret
         secret:
           defaultMode: 420
