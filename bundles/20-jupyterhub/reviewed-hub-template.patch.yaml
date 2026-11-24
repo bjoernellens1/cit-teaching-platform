@@ -300,7 +300,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-dedicated-profile-images-20261124-baa0e94efb
+          secretName: cit-shared-all-menu-20261124-466cb16988
       - name: existing-secret
         secret:
           defaultMode: 420

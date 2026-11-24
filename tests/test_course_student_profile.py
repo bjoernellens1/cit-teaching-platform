@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 HOOK = Path(__file__).parents[1] / "bundles/20-jupyterhub/overlays/course-student-profile.py"
 FRACTION = "gpu-mujoco-xpra"
+SHARED = "gpu-shared-lecture"
 PROFILES = [
     {"slug": "cpu-small"},
     {"slug": "gpu-large-pytorch"},
@@ -66,12 +67,28 @@ def test_student_choices_use_canonical_fraction_with_two_hour_limit():
         assert result["session_duration_hours"] == "2"
 
 
-def test_poweruser_and_admin_profiles_are_unchanged():
+def test_poweruser_and_admin_keep_original_profiles_and_see_the_shared_choice():
     hooks = load_hook()
     for group in ("jhub-admins", "jhub-powerusers"):
         elevated = spawner(groups=(group,), profile=FRACTION, gpu_memory_gib="20", session_duration_hours="24")
-        assert asyncio.run(hooks.KubeSpawner.profile_list(elevated)) == PROFILES
+        rows = asyncio.run(hooks.KubeSpawner.profile_list(elevated))
+        assert [row for row in rows if row["slug"] != SHARED] == PROFILES
+        matches = [row for row in rows if row["slug"] == SHARED]
+        assert len(matches) == 1
+        assert matches[0]["display_name"] == "GPU Shared (2 or 5 GiB)"
+        assert set(matches[0]["profile_options"]["gpu_memory_gib"]["choices"]) == {"2", "5"}
         assert asyncio.run(hooks.KubeSpawner.pre_spawn_hook(elevated)) == elevated.user_options
+
+
+def test_elevated_shared_selection_is_persisted_under_the_canonical_profile():
+    hook = load_hook().KubeSpawner.pre_spawn_hook
+    for selected, expected in (("2", "2"), ("5", "5"), ("20", "5"), (None, "5")):
+        s = spawner(groups=("jhub-admins",), profile=SHARED, gpu_memory_gib=selected,
+                    session_duration_hours="24")
+        s.orm_spawner = SimpleNamespace(user_options=dict(s.user_options))
+        result = asyncio.run(hook(s))
+        assert result == {"profile": FRACTION, "gpu_memory_gib": expected, "session_duration_hours": "2"}
+        assert s.orm_spawner.user_options == result
 
 
 def test_reviewed_dedicated_profile_is_kept_only_on_the_default_server():
