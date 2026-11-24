@@ -328,7 +328,7 @@
           items:
           - key: publisher.json
             path: publisher.json
-          name: cps-rino-publisher-5d6803af-20261028
+          name: cps-approval-hub-cit-dca2738839385feb
         name: cps-native-approval-publisher
       - configMap:
           defaultMode: 292
