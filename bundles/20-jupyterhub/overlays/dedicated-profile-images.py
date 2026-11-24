@@ -16,7 +16,10 @@ async def _dedicated_pinned_profiles(spawner):
     for row in rows:
         profile = profiles.get(row.get("slug"))
         if profile is not None:
-            overrides = {**row.get("kubespawner_override", {}), "image": profile["image"]}
+            image = profile["image"]
+            overrides = {**row.get("kubespawner_override", {}), "image": image}
+            if image.startswith("harbor.dshl.unileoben.ac.at/cps-users/"):
+                overrides["image_pull_secrets"] = ["harbor-cps-users-pull"]
             row = {**row, "kubespawner_override": overrides}
         result.append(row)
     return result

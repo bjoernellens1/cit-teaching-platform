@@ -32,3 +32,21 @@ def test_src_filtered_profiles_keep_the_bridge_images_through_every_load():
             assert row["kubespawner_override"] == {"image": policy[row["slug"]]["image"], "cpu_limit": 24}
     assert all(row["kubespawner_override"]["image"] == "notebook:mutable" for row in originals)
     assert asyncio.run(loader(SimpleNamespace(authorized=False))) == [cpu, shared]
+
+
+def test_private_dedicated_image_uses_the_scoped_harbor_pull_reference():
+    profile = {"image": "harbor.dshl.unileoben.ac.at/cps-users/probe@sha256:" + 64 * "b"}
+    row = {"slug": "gpu-mujoco-admin", "kubespawner_override": {"image": "legacy:tag"}}
+
+    async def inherited(spawner):
+        return [row]
+
+    config = SimpleNamespace(KubeSpawner=SimpleNamespace(profile_list=inherited))
+    bridge = SimpleNamespace(config={"profiles": {"gpu-mujoco-admin": profile}})
+    modules = {"cps_compute_hub.personal_gpu": SimpleNamespace(cit_bridge=lambda spawner: bridge)}
+    with patch.dict(sys.modules, modules):
+        exec(compile(OVERLAY.read_text(), str(OVERLAY), "exec"), {"c": config})
+    rows = asyncio.run(config.KubeSpawner.profile_list(SimpleNamespace()))
+    assert rows[0]["kubespawner_override"] == {
+        "image": profile["image"], "image_pull_secrets": ["harbor-cps-users-pull"],
+    }

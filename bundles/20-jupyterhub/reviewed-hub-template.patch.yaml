@@ -300,7 +300,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-shared-all-menu-20261124-466cb16988
+          secretName: cit-shared-2g-lock-20261124-4ca75c0473
       - name: existing-secret
         secret:
           defaultMode: 420
