@@ -300,7 +300,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-shared-2g-lock-20261124-4ca75c0473
+          secretName: cit-role-profiles-fc3131776cc9
       - name: existing-secret
         secret:
           defaultMode: 420

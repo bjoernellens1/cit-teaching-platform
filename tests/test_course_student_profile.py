@@ -4,6 +4,8 @@ from types import SimpleNamespace
 import sys
 from unittest.mock import patch
 
+import pytest
+
 
 HOOK = Path(__file__).parents[1] / "bundles/20-jupyterhub/overlays/course-student-profile.py"
 FRACTION = "gpu-mujoco-xpra"
@@ -11,6 +13,7 @@ SHARED = "gpu-shared-lecture"
 PROFILES = [
     {"slug": "cpu-small"},
     {"slug": "gpu-large-pytorch"},
+    {"slug": "gpu-mujoco-admin"},
     {"slug": "mujoco-desktop-exclusive"},
     {"slug": FRACTION, "profile_options": {
         "gpu_memory_gib": {"choices": {str(i): {"display_name": f"{i} GiB", "default": i == 1}
@@ -21,7 +24,11 @@ PROFILES = [
 
 
 async def original_profiles(spawner):
-    return PROFILES
+    groups = set((await spawner.user.get_auth_state())["oauth_user"]["groups"])
+    return [row for row in PROFILES if
+            (row["slug"] != "gpu-mujoco-admin" or "jhub-admins" in groups)
+            and (row["slug"] != "mujoco-desktop-exclusive"
+                 or spawner.user.name == "reviewed-user" and not spawner.name)]
 
 
 async def original_pre(spawner):
@@ -33,6 +40,7 @@ def load_hook(tensorflow_enabled=False):
                                 pre_spawn_hook=original_pre), Spawner=SimpleNamespace())
     modules = {
         "cps_compute.personal_fraction": SimpleNamespace(SLUG=FRACTION),
+        "cps_compute.personal_gpu": SimpleNamespace(CIT_ADMIN_MUJOCO="gpu-mujoco-admin"),
         "cps_compute_hub.personal_gpu": SimpleNamespace(
             cit_bridge=lambda spawner: SimpleNamespace(fraction_config={"tensorflowImage": "qualified"}) if tensorflow_enabled else None,
         ),
@@ -77,7 +85,8 @@ def test_poweruser_and_admin_keep_original_profiles_and_see_the_shared_choice():
     for group in ("jhub-admins", "jhub-powerusers"):
         elevated = spawner(groups=(group,), profile=FRACTION, gpu_memory_gib="20", session_duration_hours="24")
         rows = asyncio.run(hooks.KubeSpawner.profile_list(elevated))
-        assert [row for row in rows if row["slug"] not in (SHARED, FRACTION)] == PROFILES[:-1]
+        original = asyncio.run(original_profiles(elevated))
+        assert {row["slug"] for row in rows} == {row["slug"] for row in original} | {SHARED}
         original_fraction, = [row for row in rows if row["slug"] == FRACTION]
         assert original_fraction["profile_options"] == PROFILES[-1]["profile_options"]
         assert original_fraction["kubespawner_override"]["image_pull_secrets"] == ["harbor-cps-users-pull"]
@@ -85,15 +94,15 @@ def test_poweruser_and_admin_keep_original_profiles_and_see_the_shared_choice():
         assert len(matches) == 1
         assert matches[0]["kubespawner_override"]["image_pull_secrets"] == ["harbor-cps-users-pull"]
         assert matches[0]["display_name"] == "GPU Shared (2 or 5 GiB)"
-        assert not matches[0]["default"]
-        assert matches[0]["profile_options"]["gpu_memory_gib"]["choices"]["5"]["default"]
+        assert matches[0]["default"]
+        assert matches[0]["profile_options"]["gpu_memory_gib"]["choices"]["2"]["default"]
         assert set(matches[0]["profile_options"]["gpu_memory_gib"]["choices"]) == {"2", "5"}
         assert asyncio.run(hooks.KubeSpawner.pre_spawn_hook(elevated)) == elevated.user_options
 
 
 def test_elevated_shared_selection_is_persisted_under_the_canonical_profile():
     hook = load_hook().KubeSpawner.pre_spawn_hook
-    for selected, expected in (("2", "2"), ("5", "5"), ("20", "5"), (None, "5")):
+    for selected, expected in (("2", "2"), ("5", "5"), ("20", "2"), (None, "2")):
         s = spawner(groups=("jhub-admins",), profile=SHARED, gpu_memory_gib=selected,
                     session_duration_hours="24")
         s.orm_spawner = SimpleNamespace(user_options=dict(s.user_options))
@@ -126,3 +135,28 @@ def test_framework_selector_is_available_on_the_course_choice_for_all_roles_when
 
     disabled = asyncio.run(load_hook().KubeSpawner.profile_list(spawner()))
     assert "gpu_framework" not in disabled[-1]["profile_options"]
+
+
+
+@pytest.mark.parametrize("login", ["m0000000", "p0000000"])
+def test_student_choices_are_the_first_section_for_admin_accounts(login):
+    profile_list = load_hook(tensorflow_enabled=True).KubeSpawner.profile_list
+    student = asyncio.run(profile_list(spawner(owner=login)))
+    administrator = asyncio.run(profile_list(spawner(owner=login, groups=("jhub-admins",))))
+    assert [row["slug"] for row in administrator[:2]] == ["cpu-small", SHARED]
+    assert [row["cit_section"] for row in administrator] == [
+        "Student profiles", "Student profiles", "Research and power-user profiles",
+        "Research and power-user profiles", "Administrator-only profiles",
+    ]
+    assert student[1]["profile_options"] == administrator[1]["profile_options"]
+    assert [row["default"] for row in administrator].count(True) == 1
+    assert administrator[-1]["slug"] == "gpu-mujoco-admin"
+
+
+def test_poweruser_has_student_and_research_sections_without_admin_only_choices():
+    profile_list = load_hook().KubeSpawner.profile_list
+    rows = asyncio.run(profile_list(spawner(groups=("jhub-powerusers",))))
+    assert set(row["cit_section"] for row in rows) == {
+        "Student profiles", "Research and power-user profiles",
+    }
+    assert not any(row["slug"] == "gpu-mujoco-admin" for row in rows)

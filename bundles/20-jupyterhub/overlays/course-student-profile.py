@@ -2,6 +2,7 @@
 import copy
 
 from cps_compute.personal_fraction import SLUG as _course_fraction_slug
+from cps_compute.personal_gpu import CIT_ADMIN_MUJOCO as _course_admin_slug
 from cps_compute_hub.personal_exclusive import SLUG as _course_reviewed_slug, USERNAME as _course_reviewed_user
 from cps_compute_hub.personal_gpu import cit_bridge as _course_cit_bridge
 
@@ -9,8 +10,30 @@ _course_previous_profiles = c.KubeSpawner.profile_list
 _course_previous_pre = c.KubeSpawner.pre_spawn_hook
 _course_memory_sizes = ('2', '5')
 _course_student_memory = '2'
-_course_elevated_memory = '5'
 _course_shared_slug = 'gpu-shared-lecture'
+
+_course_form_template = """{% include 'form.html' %}
+<script>
+(() => {
+  const sectionStarts = [
+    {%- for profile in profile_list %}
+    {%- if profile.cit_section and loop.changed(profile.cit_section) %}
+    [{{ profile.slug | tojson }}, {{ profile.cit_section | tojson }}],
+    {%- endif %}
+    {%- endfor %}
+  ];
+  for (const [slug, title] of sectionStarts) {
+    const option = document.getElementById('profile-item-' + slug);
+    const row = option && option.closest('.js-profile-label');
+    if (!row) continue;
+    const heading = document.createElement('h2');
+    heading.className = 'h4 mt-4 mb-2';
+    heading.textContent = title;
+    row.before(heading);
+  }
+})();
+</script>
+"""
 
 async def _course_standard_user(spawner):
     state = await spawner.user.get_auth_state()
@@ -29,10 +52,9 @@ async def _course_profiles(spawner):
     overrides.setdefault("image_pull_secrets", ["harbor-cps-users-pull"])
     fixed = copy.deepcopy(rows[fraction_index])
     standard = await _course_standard_user(spawner)
-    default_memory = _course_student_memory if standard else _course_elevated_memory
     memory = fixed["profile_options"]["gpu_memory_gib"]
     memory["choices"] = {
-        size: {**memory["choices"][size], "default": size == default_memory}
+        size: {**memory["choices"][size], "default": size == _course_student_memory}
         for size in _course_memory_sizes
     }
     fixed["profile_options"] = {"gpu_memory_gib": memory}
@@ -47,16 +69,31 @@ async def _course_profiles(spawner):
             },
         }
         framework_description = "PyTorch or TensorFlow 2.20.0"
-    fixed.update(display_name="GPU Shared (2 or 5 GiB)", default=standard,
+    fixed.update(display_name="GPU Shared (2 or 5 GiB)", default=True, cit_section="Student profiles",
                  description=f"Choose 2 or 5 GiB of shared A100 VRAM with {framework_description}. Two-hour session.")
-    if not standard:
-        fixed["slug"] = _course_shared_slug
-        return [*rows[:fraction_index], fixed, *rows[fraction_index:]]
-    reviewed = []
+    cpu = [
+        {**row, "default": False, "cit_section": "Student profiles"}
+        for row in rows if row.get("slug") == "cpu-small"
+    ]
+    assigned = []
     if spawner.user.name == _course_reviewed_user and not spawner.name:
-        reviewed = [row for row in rows if row.get("slug") == _course_reviewed_slug]
-    cpu = [{**row, "default": False} for row in rows if row.get("slug") == "cpu-small"]
-    return cpu + [fixed] + reviewed
+        assigned = [
+            {**row, "default": False, "cit_section": "Assigned profiles"}
+            for row in rows if row.get("slug") == _course_reviewed_slug
+        ]
+    if standard:
+        return cpu + [fixed] + assigned
+
+    fixed["slug"] = _course_shared_slug
+    elevated = [
+        {**row, "default": False, "cit_section": "Research and power-user profiles"}
+        for row in rows if row.get("slug") not in {"cpu-small", _course_admin_slug, _course_reviewed_slug}
+    ]
+    admin = [
+        {**row, "default": False, "cit_section": "Administrator-only profiles"}
+        for row in rows if row.get("slug") == _course_admin_slug
+    ]
+    return cpu + [fixed] + elevated + admin + assigned
 
 async def _course_pre(spawner):
     options = spawner.user_options
@@ -68,11 +105,10 @@ async def _course_pre(spawner):
     standard = slug in (_course_shared_slug, _course_fraction_slug) and await _course_standard_user(spawner)
     if slug == _course_shared_slug or (slug == _course_fraction_slug and standard):
         memory = options.get("gpu_memory_gib")
-        default_memory = _course_student_memory if standard else _course_elevated_memory
         options = {
             **options,
             "profile": _course_fraction_slug,
-            "gpu_memory_gib": memory if memory in _course_memory_sizes else default_memory,
+            "gpu_memory_gib": memory if memory in _course_memory_sizes else _course_student_memory,
             "session_duration_hours": "2",
         }
         spawner.user_options = options
@@ -83,5 +119,6 @@ async def _course_pre(spawner):
     return await _course_previous_pre(spawner)
 
 c.KubeSpawner.profile_list = _course_profiles
+c.KubeSpawner.profile_form_template = _course_form_template
 c.KubeSpawner.pre_spawn_hook = c.Spawner.pre_spawn_hook = _course_pre
 
