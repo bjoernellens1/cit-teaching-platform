@@ -114,7 +114,7 @@
               name: native-lifecycle147-hub-7b45a67fa2718eca-control
         - name: CPS_NATIVE_GROUP_POLICY_TRANSITION_REFERENCE
           value: /etc/cps-native-proof/policy-transition.json
-        image: ghcr.io/mul-cps/cps-compute@sha256:81ab987781d231c9201e82c3ef413e74f11bad707ad7850cda067e782533094b
+        image: ghcr.io/mul-cps/cps-compute@sha256:45afe601e96ef5e2e88223e3e50e00c8d47efa2e3379ce1e9eb7557c39943f44
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 30
@@ -308,7 +308,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-spawn-layout-values-6322c79f5b45
+          secretName: cit-shared-24h-values-1dfc447e6b81
       - name: existing-secret
         secret:
           defaultMode: 420
@@ -336,7 +336,7 @@
           items:
           - key: publisher.json
             path: publisher.json
-          name: cps-approval-hub-cit-dca2738839385feb
+          name: cps-cit-shared-24h-publisher-8495cdc3ebe3
         name: cps-native-approval-publisher
       - configMap:
           defaultMode: 292

@@ -71,17 +71,19 @@ def test_student_menu_has_only_two_shared_sizes_and_cpu():
     assert set(choices) == {"2", "5"}
     assert choices["2"]["default"] and not choices["5"]["default"]
     assert rows[0]["default"] and not rows[1]["default"]
+    assert rows[1]["kubespawner_override"]["extra_pod_config"]["activeDeadlineSeconds"] == 86400
+    assert "24-hour" in rows[1]["description"]
     assert "session_duration_hours" not in rows[1]["profile_options"]
     assert len(PROFILES[-1]["profile_options"]["gpu_memory_gib"]["choices"]) == 20
 
 
-def test_student_choices_use_canonical_fraction_with_two_hour_limit():
+def test_student_choices_use_canonical_fraction_with_twenty_four_hour_limit():
     hook = load_hook().KubeSpawner.pre_spawn_hook
     for requested, expected in (("2", "2"), ("5", "5"), ("20", "2"), (None, "2"), (["2"], "2")):
         result = asyncio.run(hook(spawner(profile=FRACTION, gpu_memory_gib=requested, session_duration_hours="24")))
         assert result["profile"] == FRACTION
         assert result["gpu_memory_gib"] == expected
-        assert result["session_duration_hours"] == "2"
+        assert result["session_duration_hours"] == "24"
 
 
 def test_poweruser_and_admin_keep_original_profiles_and_see_the_shared_choice():
@@ -111,7 +113,8 @@ def test_elevated_shared_selection_is_persisted_under_the_canonical_profile():
                     session_duration_hours="24")
         s.orm_spawner = SimpleNamespace(user_options=dict(s.user_options))
         result = asyncio.run(hook(s))
-        assert result == {"profile": FRACTION, "gpu_memory_gib": expected, "session_duration_hours": "2"}
+        assert result == {"profile": FRACTION, "gpu_memory_gib": expected, "session_duration_hours": "24",
+                          "gpu_framework": "pytorch", "cit_shared_lecture": True}
         assert s.orm_spawner.user_options == result
 
 
@@ -131,7 +134,8 @@ def test_framework_selector_is_available_on_the_course_choice_for_all_roles_when
         shared, = [r for r in enabled if r.get("display_name") == "GPU Shared (2 or 5 GiB)"]
         choices = shared["profile_options"]["gpu_framework"]["choices"]
         assert set(choices) == {"pytorch", "tensorflow"}
-        assert choices["pytorch"]["default"] is True
+        assert choices["tensorflow"]["default"] is True
+        assert not choices["pytorch"].get("default")
         assert choices["tensorflow"]["display_name"] == "TensorFlow 2.20.0"
         if group:
             full_menu, = [r for r in enabled if r.get("slug") == FRACTION]
@@ -166,3 +170,25 @@ def test_poweruser_has_student_and_research_sections_without_admin_only_choices(
         "Student profiles", "Research and power-user profiles",
     }
     assert not any(row["slug"] == "gpu-mujoco-admin" for row in rows)
+
+
+def test_saved_framework_is_persisted_before_spawn_and_survives_named_restart():
+    hooks = load_hook(tensorflow_enabled=True)
+    for group in (None, "jhub-powerusers"):
+        groups = (group,) if group else ()
+        slug = SHARED if group else FRACTION
+        fresh = spawner(groups=groups, name="lab", profile=slug)
+        fresh.orm_spawner = SimpleNamespace(user_options={})
+        defaults = asyncio.run(hooks.KubeSpawner.pre_spawn_hook(fresh))
+        assert defaults["gpu_framework"] == fresh.orm_spawner.user_options["gpu_framework"] == "tensorflow"
+        assert defaults["gpu_memory_gib"] == "2"
+
+        selected = spawner(groups=groups, name="lab", profile=slug, gpu_framework="pytorch", gpu_memory_gib="5")
+        selected.orm_spawner = SimpleNamespace(user_options={})
+        asyncio.run(hooks.KubeSpawner.pre_spawn_hook(selected))
+        saved = selected.orm_spawner.user_options
+        restart = spawner(groups=groups, name="lab", **saved)
+        assert asyncio.run(hooks.KubeSpawner.pre_spawn_hook(restart)) == saved
+        assert saved["gpu_framework"] == "pytorch"
+        assert saved["gpu_memory_gib"] == "5"
+        assert saved["session_duration_hours"] == "24"

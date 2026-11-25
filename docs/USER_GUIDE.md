@@ -132,7 +132,7 @@ When you're done working:
 2. Click **Stop My Server**
 3. Your work is automatically saved and will be available next time
 
-> **Important**: Servers auto-stop after 1 hour of inactivity or 8 hours of runtime to conserve resources.
+> **Important**: CIT checks for idle servers every five minutes and stops them after 24 hours of inactivity. The GPU Shared profile also has a 24-hour runtime limit. Your home files are preserved when the server stops.
 
 ---
 
@@ -156,21 +156,12 @@ Different profiles provide different resources. Choose based on your workload:
 - Basic plotting and visualization
 - Course assignments
 
-### GPU Small
+### GPU Shared (2 or 5 GiB)
 
-**Best for**: Machine learning training, GPU-accelerated computations
-
-- **CPU**: 16 cores
-- **RAM**: 48 GB
-- **Storage**: 10 GB (your personal work directory)
-- **GPU**: 10 GB VRAM (shared A100, via NVIDIA MPS)
-- **Availability**: Course-dependent (ask your instructor)
-
-**Use Cases**:
-- Deep learning with PyTorch, TensorFlow
-- Computer vision model training
-- Neural network experimentation
-- GPU-accelerated data processing
+Use this profile for coursework that needs CUDA. It defaults to 2 GiB of shared
+A100 memory and TensorFlow 2.20.0. In **Server Options**, choose 5 GiB if you need
+more GPU memory or choose **PyTorch** if your course uses it. Both frameworks
+have a 24-hour maximum session.
 
 ### Requesting Access to Higher Profiles
 
