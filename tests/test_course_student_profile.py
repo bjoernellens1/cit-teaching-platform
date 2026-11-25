@@ -36,9 +36,9 @@ async def original_pre(spawner):
     return dict(spawner.user_options)
 
 
-def load_hook(tensorflow_enabled=False):
+def load_hook(tensorflow_enabled=False, pre_spawn=original_pre):
     container = SimpleNamespace(KubeSpawner=SimpleNamespace(profile_list=original_profiles,
-                                pre_spawn_hook=original_pre), Spawner=SimpleNamespace(), JupyterHub=Config())
+                                pre_spawn_hook=pre_spawn), Spawner=SimpleNamespace(), JupyterHub=Config())
     modules = {
         "jupyterhub.handlers.base": SimpleNamespace(BaseHandler=object),
         "jupyterhub.utils": SimpleNamespace(url_path_join=lambda base, path: base.rstrip("/") + "/" + path.lstrip("/")),
@@ -192,3 +192,22 @@ def test_saved_framework_is_persisted_before_spawn_and_survives_named_restart():
         assert saved["gpu_framework"] == "pytorch"
         assert saved["gpu_memory_gib"] == "5"
         assert saved["session_duration_hours"] == "24"
+
+
+
+def test_course_options_reach_spawner_before_recovery_and_orm_afterward():
+    original = {"profile": SHARED, "gpu_memory_gib": "5", "gpu_framework": "pytorch"}
+    session = spawner(groups=("jhub-admins",), name="lab", **original)
+    session.orm_spawner = SimpleNamespace(user_options=original.copy())
+
+    async def recover(spawner):
+        # The recovery hook can read through the Hub ORM before taking the
+        # stopped generation's lock through a separate database connection.
+        assert spawner.orm_spawner.user_options == original
+        assert spawner.user_options["session_duration_hours"] == "24"
+        return "prepared"
+
+    hook = load_hook(tensorflow_enabled=True, pre_spawn=recover).KubeSpawner.pre_spawn_hook
+    assert asyncio.run(hook(session)) == "prepared"
+    assert session.orm_spawner.user_options is session.user_options
+    assert session.orm_spawner.user_options["gpu_framework"] == "pytorch"

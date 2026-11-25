@@ -206,10 +206,13 @@ async def _course_pre(spawner):
             "cit_shared_lecture": True,
         }
         spawner.user_options = options
-        # The gateway compares the pending Hub server model to the reservation.
+        result = await _course_previous_pre(spawner)
+        # Recovery locks this row through a separate database session. Save
+        # normalized options afterward, before the Hub starts the Pod.
         orm_spawner = getattr(spawner, "orm_spawner", None)
         if orm_spawner is not None:
             orm_spawner.user_options = options
+        return result
     return await _course_previous_pre(spawner)
 
 c.KubeSpawner.profile_list = _course_profiles

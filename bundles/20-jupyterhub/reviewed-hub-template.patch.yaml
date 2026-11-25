@@ -308,7 +308,7 @@
       - name: secret
         secret:
           defaultMode: 420
-          secretName: cit-shared-24h-values-1dfc447e6b81
+          secretName: cit-shared-24h-restart-6778f6193eb5
       - name: existing-secret
         secret:
           defaultMode: 420
